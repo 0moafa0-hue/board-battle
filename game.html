@@ -1,0 +1,2240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Board Battle: AI Arena</title>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --card-bg: #1e293b;
+      --panel-bg: #162032;
+      --border: #334155;
+      --accent: #6366f1;
+      --accent-hover: #4f46e5;
+      --gold: #f59e0b;
+      --red: #ef4444;
+      --green: #10b981;
+      --purple: #a855f7;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+
+    /* Password Screen Styles */
+    #password-gate {
+      position: fixed;
+      inset: 0;
+      background: #090d16;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 16px;
+    }
+    .gate-box {
+      background: #1e293b;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px 20px;
+      max-width: 360px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+    }
+    .gate-input {
+      width: 100%;
+      background: #0f172a;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      color: white;
+      font-size: 1.3rem;
+      text-align: center;
+      letter-spacing: 4px;
+      margin: 16px 0 10px 0;
+      outline: none;
+    }
+    .gate-input:focus { border-color: var(--accent); }
+
+    /* Main Game App (Hidden until unlocked) */
+    #game-app { display: none; }
+
+    header {
+      background: rgba(15, 23, 42, 0.96);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 40;
+    }
+    .header-title { font-size: 1.1rem; font-weight: 800; color: #a5b4fc; display: flex; align-items: center; gap: 6px; }
+    .header-actions { display: flex; gap: 8px; align-items: center; }
+
+    button {
+      background: var(--accent);
+      color: white;
+      border: none;
+      min-height: 44px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      user-select: none;
+    }
+    button:active { transform: scale(0.97); }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+    button.secondary { background: #334155; }
+    button.danger { background: var(--red); }
+    button.success { background: var(--green); }
+    button.gold { background: var(--gold); color: #000; font-weight: 700; }
+
+    .main-layout {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 14px;
+      padding: 12px;
+      flex: 1;
+      max-width: 1440px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    @media (max-width: 900px) {
+      .main-layout { grid-template-columns: 1fr; padding: 10px; }
+      .right-col { order: 3; }
+    }
+
+    .board-container {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      margin-bottom: 12px;
+    }
+    .board-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(68px, 1fr));
+      gap: 8px;
+    }
+    @media (max-width: 500px) {
+      .board-grid { grid-template-columns: repeat(5, 1fr); gap: 6px; }
+    }
+    .tile {
+      background: #0f172a;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      min-height: 70px;
+      padding: 6px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .tile.special-milestone {
+      border-color: var(--gold);
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
+      background: #1c1917;
+    }
+    .tile.start-tile { border-color: #3b82f6; }
+    .tile.goal-tile { border-color: var(--green); background: #064e3b33; }
+    .tile-header {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .tile-badge {
+      font-size: 0.55rem;
+      padding: 1px 4px;
+      border-radius: 3px;
+      background: var(--gold);
+      color: #000;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .tile-occupants { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 4px; }
+    .avatar-token {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      font-weight: bold;
+      color: white;
+      border: 1.5px solid white;
+    }
+
+    .players-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    @media (max-width: 500px) { .players-list { grid-template-columns: 1fr; } }
+    .player-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .player-card.is-human {
+      border: 2px solid var(--accent);
+      background: #1c1d38;
+      box-shadow: 0 0 12px rgba(99, 102, 241, 0.15);
+    }
+    .player-header { display: flex; align-items: center; justify-content: space-between; }
+    .player-info { display: flex; align-items: center; gap: 8px; }
+    .avatar-frame {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0f172a;
+      border: 1.5px solid var(--border);
+      flex-shrink: 0;
+    }
+    .status-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+    .tag {
+      font-size: 0.65rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: #334155;
+      font-weight: 600;
+    }
+    .tag.green { background: #065f46; color: #a7f3d0; }
+    .tag.gold { background: #78350f; color: #fde68a; }
+    .tag.purple { background: #581c87; color: #e9d5ff; }
+
+    .arena-panel {
+      background: var(--card-bg);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-height: 420px;
+      scroll-margin-top: 60px;
+    }
+    .arena-header {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .log-panel {
+      background: var(--panel-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      max-height: 500px;
+    }
+    .log-content {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 0.8rem;
+    }
+    .log-entry {
+      background: #0f172a;
+      padding: 6px 8px;
+      border-radius: 6px;
+      border-left: 3px solid var(--accent);
+      line-height: 1.35;
+    }
+    .log-entry.effect { border-color: var(--gold); }
+    .log-entry.loss { border-color: var(--red); }
+    .log-entry.win { border-color: var(--green); }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 12px;
+    }
+    .modal {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      max-width: 500px;
+      width: 100%;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+      max-height: 92vh;
+      overflow-y: auto;
+    }
+
+    .cards-row { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+    .deck-playing-card {
+      background: white;
+      color: #0f172a;
+      border-radius: 6px;
+      width: 54px;
+      height: 80px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 4px 5px;
+      font-weight: bold;
+      font-size: 0.75rem;
+      border: 1px solid #cbd5e1;
+    }
+    .deck-playing-card.red { color: #dc2626; }
+    .deck-playing-card.joker {
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      border: 2px solid var(--gold);
+      color: #78350f;
+    }
+    .deck-playing-card.trap {
+      background: linear-gradient(135deg, #450a0a, #1c1917);
+      border: 2px solid var(--red);
+      color: #fca5a5;
+    }
+
+    .grid-pick {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 6px;
+      margin: 10px 0;
+    }
+    .mystery-card {
+      background: #334155;
+      color: white;
+      aspect-ratio: 2/3;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      cursor: pointer;
+      border: 1.5px solid var(--border);
+    }
+    .mystery-card.selected { border-color: var(--gold); transform: scale(1.04); background: #475569; }
+    .mystery-card.revealed { background: #0f172a; border-color: var(--accent); }
+
+    .choice-button-grid { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 10px; }
+    .card-presentation {
+      background: #0f172a;
+      border: 3px solid;
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      margin: 12px 0;
+    }
+    .card-presentation.Legendary { border-color: var(--gold); }
+    .card-presentation.Rare { border-color: var(--purple); }
+    .card-presentation.Good { border-color: var(--green); }
+    .card-presentation.Bad { border-color: var(--red); }
+
+    .segmented-control {
+      display: flex;
+      background: #0f172a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 4px;
+      gap: 4px;
+      margin-top: 6px;
+    }
+    .segmented-btn {
+      flex: 1;
+      padding: 8px 4px;
+      font-size: 0.85rem;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--text-muted);
+      border: none;
+      min-height: 40px;
+    }
+    .segmented-btn.active { background: var(--accent); color: white; font-weight: 700; }
+  </style>
+</head>
+<body>
+
+  <!-- ================= PASSWORD LOCK SCREEN ================= -->
+  <div id="password-gate">
+    <div class="gate-box">
+      <div style="font-size: 3rem; margin-bottom: 8px;">🔒</div>
+      <h2 style="color: var(--gold); font-size: 1.4rem;">Restricted Access</h2>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">Enter the passcode to launch the game:</p>
+      
+      <input 
+        type="password" 
+        id="pass-input" 
+        class="gate-input" 
+        placeholder="••••••" 
+        inputmode="numeric" 
+        maxlength="10"
+        onkeydown="if(event.key==='Enter') checkPassword()"
+      />
+      
+      <div id="pass-error" style="color: var(--red); font-size: 0.85rem; margin-bottom: 12px; display: none;">
+        Incorrect password! Try again.
+      </div>
+
+      <button class="gold" style="width: 100%; font-size: 1rem;" onclick="checkPassword()">
+        Unlock Game
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= GAME CONTAINER ================= -->
+  <div id="game-app">
+    <header>
+      <div class="header-title">
+        <span>🎲 Board Battle</span>
+      </div>
+      <div class="header-actions">
+        <span id="round-counter" style="font-weight: 700; color: #a5b4fc; font-size: 0.95rem;">Round 1</span>
+        <button class="secondary" style="min-height: 36px; padding: 4px 10px; font-size: 0.8rem;" onclick="game.resetPrompt()">Restart</button>
+      </div>
+    </header>
+
+    <div class="main-layout">
+      <div class="left-col">
+        <!-- Board Layout -->
+        <div class="board-container">
+          <div class="board-grid" id="board-grid"></div>
+        </div>
+
+        <!-- Active Mini-Game Arena -->
+        <div class="arena-panel" id="arena-panel"></div>
+
+        <!-- Players Roster -->
+        <h3 style="margin: 14px 0 6px 0; font-size: 0.95rem; color: var(--text-muted);">Player Standings</h3>
+        <div class="players-list" id="players-list"></div>
+      </div>
+
+      <!-- Live Event Feed -->
+      <div class="right-col">
+        <div class="log-panel">
+          <h3 style="margin-bottom: 8px; font-size: 0.95rem; display: flex; justify-content: space-between; align-items: center;">
+            <span>Event Feed</span>
+            <button style="min-height: 30px; padding: 2px 8px; font-size: 0.75rem;" class="secondary" onclick="game.clearLogs()">Clear</button>
+          </h3>
+          <div class="log-content" id="log-content"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="modal-container"></div>
+  </div>
+
+  <script>
+    /* =====================================================================
+       PASSWORD VALIDATION (192855)
+       ===================================================================== */
+    function checkPassword() {
+      const entered = document.getElementById('pass-input').value.trim();
+      if (entered === '192855') {
+        sessionStorage.setItem('game_auth_key', 'unlocked');
+        document.getElementById('password-gate').style.display = 'none';
+        document.getElementById('game-app').style.display = 'block';
+        initGameEngine();
+      } else {
+        document.getElementById('pass-error').style.display = 'block';
+        document.getElementById('pass-input').value = '';
+        document.getElementById('pass-input').focus();
+      }
+    }
+
+    // Auto-unlock if entered earlier in this browser session
+    window.addEventListener('DOMContentLoaded', () => {
+      if (sessionStorage.getItem('game_auth_key') === 'unlocked') {
+        document.getElementById('password-gate').style.display = 'none';
+        document.getElementById('game-app').style.display = 'block';
+        initGameEngine();
+      }
+    });
+
+    /* =====================================================================
+       SVG ARTWORK
+       ===================================================================== */
+    function getCharacterAvatarSVG(charId, size = 32) {
+      switch (charId) {
+        case 'c1': return `<svg width="${size}" height="${size}" viewBox="0 0 40 40"><rect width="40" height="40" rx="8" fill="#064e3b"/><path d="M20 9C17 9 15 12 17 15C14 13 11 15 11 18C11 21 14 23 17 21C15 24 17 27 20 27C23 27 25 24 23 21C26 23 29 21 29 18C29 15 26 13 23 15C25 12 23 9 20 9Z" fill="#34d399"/><circle cx="20" cy="18" r="2.5" fill="#fef08a"/></svg>`;
+        case 'c2': return `<svg width="${size}" height="${size}" viewBox="0 0 40 40"><rect width="40" height="40" rx="8" fill="#4c1d95"/><path d="M12 22C12 28 16 32 20 32C24 32 28 28 28 22C28 14 20 10 20 10C20 10 12 14 12 22Z" fill="#a855f7"/><circle cx="10" cy="14" r="2" fill="#fef08a"/><circle cx="30" cy="14" r="2" fill="#fef08a"/></svg>`;
+        case 'c3': return `<svg width="${size}" height="${size}" viewBox="0 0 40 40"><rect width="40" height="40" rx="8" fill="#1e3a5f"/><path d="M20 8L30 13V22C30 28 25 33 20 35C15 33 10 28 10 22V13L20 8Z" fill="#38bdf8"/><path d="M20 14V28M13 21H27" stroke="#0f172a" stroke-width="2.5"/></svg>`;
+        case 'c4': return `<svg width="${size}" height="${size}" viewBox="0 0 40 40"><rect width="40" height="40" rx="8" fill="#78350f"/><path d="M8 26L18 20L14 14L26 12L24 22L32 26" stroke="#fbbf24" stroke-width="3"/><circle cx="28" cy="10" r="3.5" fill="#fef08a"/></svg>`;
+        case 'c5': return `<svg width="${size}" height="${size}" viewBox="0 0 40 40"><rect width="40" height="40" rx="8" fill="#1e1e38"/><path d="M16 32H24V28H22L24 20C26 18 25 14 21 12C20 10 17 10 16 12C13 14 14 18 16 20L18 28H16V32Z" fill="#818cf8"/></svg>`;
+        case 'c6': return `<svg width="${size}" height="${size}" viewBox="0 0 40 40"><rect width="40" height="40" rx="8" fill="#0f172a"/><path d="M12 28C12 20 15 12 20 10C25 12 28 20 28 28C28 32 20 33 20 33C20 33 12 32 12 28Z" fill="#334155"/><circle cx="18" cy="22" r="1.5" fill="#38bdf8"/><circle cx="22" cy="22" r="1.5" fill="#38bdf8"/></svg>`;
+        case 'c7': return `<svg width="${size}" height="${size}" viewBox="0 0 40 40"><rect width="40" height="40" rx="8" fill="#374151"/><circle cx="20" cy="12" r="3" stroke="#fff" stroke-width="2"/><path d="M20 15V30M13 20H27" stroke="#fff" stroke-width="2.5"/></svg>`;
+        case 'c8': return `<svg width="${size}" height="${size}" viewBox="0 0 40 40"><rect width="40" height="40" rx="8" fill="#831843"/><rect x="12" y="14" width="12" height="16" rx="2" fill="#fff" transform="rotate(-15 12 14)"/><rect x="16" y="12" width="12" height="16" rx="2" fill="#fff"/><circle cx="22" cy="20" r="3" fill="#e11d48"/></svg>`;
+        case 'c9': return `<svg width="${size}" height="${size}" viewBox="0 0 40 40"><rect width="40" height="40" rx="8" fill="#312e81"/><path d="M10 28H30M14 28V16H26V28" stroke="#c084fc" stroke-width="3"/><rect x="14" y="24" width="12" height="4" fill="#f43f5e"/></svg>`;
+        case 'c10': return `<svg width="${size}" height="${size}" viewBox="0 0 40 40"><rect width="40" height="40" rx="8" fill="#881337"/><path d="M20 28L14 21C11 18 12 13 16 13C18 13 20 15 20 15C20 15 22 13 24 13C28 13 29 18 26 21L20 28Z" fill="#fb7185"/></svg>`;
+        default: return `<svg width="${size}" height="${size}" viewBox="0 0 40 40"><rect width="40" height="40" rx="8" fill="#475569"/></svg>`;
+      }
+    }
+
+    function getSpecialCardArtSVG(cardId, size = 64) {
+      switch (cardId) {
+        case 'card_legendary': return `<svg width="${size}" height="${size}" viewBox="0 0 60 60"><circle cx="30" cy="30" r="26" fill="#78350f" stroke="#f59e0b" stroke-width="2"/><path d="M30 12L38 28H22L30 12Z" fill="#fde047"/><text x="30" y="52" fill="#fff" font-size="14" font-weight="900" text-anchor="middle">+3</text></svg>`;
+        case 'card_comeback': return `<svg width="${size}" height="${size}" viewBox="0 0 60 60"><circle cx="30" cy="30" r="26" fill="#3b0764" stroke="#a855f7" stroke-width="2"/><path d="M20 30A10 10 0 1 1 30 40" stroke="#c084fc" stroke-width="4" fill="none"/></svg>`;
+        case 'card_setback': return `<svg width="${size}" height="${size}" viewBox="0 0 60 60"><circle cx="30" cy="30" r="26" fill="#450a0a" stroke="#ef4444" stroke-width="2"/><circle cx="30" cy="30" r="14" stroke="#f87171" stroke-width="2.5" fill="none"/><text x="30" y="34" fill="#fff" font-size="12" font-weight="900" text-anchor="middle">-2</text></svg>`;
+        case 'card_step': return `<svg width="${size}" height="${size}" viewBox="0 0 60 60"><circle cx="30" cy="30" r="26" fill="#064e3b" stroke="#10b981" stroke-width="2"/><path d="M22 36L30 20L38 36" stroke="#34d399" stroke-width="5" fill="none"/><text x="30" y="48" fill="#fff" font-size="12" font-weight="900" text-anchor="middle">+1</text></svg>`;
+        case 'card_shield': return `<svg width="${size}" height="${size}" viewBox="0 0 60 60"><circle cx="30" cy="30" r="26" fill="#0c4a6e" stroke="#38bdf8" stroke-width="2"/><path d="M30 14L42 20V32C42 40 36 46 30 48C24 46 18 40 18 32V20L30 14Z" fill="#0284c7"/></svg>`;
+        case 'card_double': return `<svg width="${size}" height="${size}" viewBox="0 0 60 60"><circle cx="30" cy="30" r="26" fill="#713f12" stroke="#eab308" stroke-width="2"/><text x="30" y="38" fill="#fde047" font-size="22" font-weight="900" text-anchor="middle">2X</text></svg>`;
+        case 'card_theft': return `<svg width="${size}" height="${size}" viewBox="0 0 60 60"><circle cx="30" cy="30" r="26" fill="#18181b" stroke="#71717a" stroke-width="2"/><path d="M20 40C20 30 25 24 32 20C34 22 34 26 30 28C36 28 38 32 34 35C38 36 38 40 34 40Z" fill="#a1a1aa"/></svg>`;
+        case 'card_extra_chance': return `<svg width="${size}" height="${size}" viewBox="0 0 60 60"><circle cx="30" cy="30" r="26" fill="#14532d" stroke="#22c55e" stroke-width="2"/><path d="M30 14L34 24L44 25L36 32L39 42L30 36L21 42L24 32L16 25L26 24Z" fill="#facc15"/><text x="30" y="52" fill="#fff" font-size="10" font-weight="900" text-anchor="middle">+1 CHANCE</text></svg>`;
+        case 'card_back_step': return `<svg width="${size}" height="${size}" viewBox="0 0 60 60"><circle cx="30" cy="30" r="26" fill="#450a0a" stroke="#dc2626" stroke-width="2"/><path d="M22 24L30 40L38 24" stroke="#f87171" stroke-width="5" fill="none"/><text x="30" y="20" fill="#fff" font-size="12" font-weight="900" text-anchor="middle">-2</text></svg>`;
+        case 'card_unlucky_win': return `<svg width="${size}" height="${size}" viewBox="0 0 60 60"><circle cx="30" cy="30" r="26" fill="#2e1065" stroke="#7c3aed" stroke-width="2"/><path d="M18 22L30 14L42 22L36 38H24L18 22Z" fill="#a78bfa"/><line x1="20" y1="20" x2="40" y2="40" stroke="#ef4444" stroke-width="4"/></svg>`;
+        default: return `<svg width="${size}" height="${size}" viewBox="0 0 60 60"><circle cx="30" cy="30" r="26" fill="#334155"/></svg>`;
+      }
+    }
+
+    const EXPANDED_QUESTIONS = [
+      { q: 'Pick a Pet Animal', options: ['Golden Retriever', 'Mystic Cat', 'Capybara', 'Peregrine Falcon'] },
+      { q: 'Pick a Vacation Spot', options: ['Tropical Beach', 'Cabin in Snow', 'Tokyo Cyber-City', 'Ancient Ruins'] },
+      { q: 'Pick a Superpower', options: ['Flight', 'Invisibility', 'Time Travel', 'Telekinesis'] },
+      { q: 'Pick a Dinner Choice', options: ['Artisanal Pizza', 'Fresh Sushi', 'Street Tacos', 'Truffle Pasta'] },
+      { q: 'Pick an Element', options: ['Solar Inferno', 'Abyssal Water', 'Storm Tempest', 'Terra Crystal'] },
+      { q: 'Pick a Mythological Creature', options: ['Dragon', 'Phoenix', 'Kraken', 'Cerberus'] },
+      { q: 'Pick a Drink of Choice', options: ['Iced Matcha', 'Dark Roast Coffee', 'Berry Smoothie', 'Sparkling Lemonade'] },
+      { q: 'Pick a Video Game Role', options: ['Frontline Tank', 'Sharpshooter DPS', 'Healer Support', 'Stealth Assassin'] },
+      { q: 'Pick a Movie Genre', options: ['Sci-Fi Thriller', 'Epic Fantasy', 'Psychological Horror', 'Heist Comedy'] },
+      { q: 'Pick a Musical Instrument', options: ['Electric Guitar', 'Grand Piano', 'Violin', 'Synth Keytar'] },
+      { q: 'Pick a Weapon of Legend', options: ['Excalibur Blade', 'Mjolnir Hammer', 'Aegis Shield', 'Trident of Tides'] },
+      { q: 'Pick a Dessert', options: ['Lava Cake', 'Matcha Ice Cream', 'Churros with Dulce', 'Mango Cheesecake'] },
+      { q: 'Pick a Vehicle', options: ['Retro Muscle Car', 'Hovercraft Jet', 'Sleek Motorbike', 'Bullet Train'] },
+      { q: 'Pick an Era to Visit', options: ['Feudal Japan', 'Ancient Egypt', 'Victorian Steampunk', 'Year 3000 Utopia'] },
+      { q: 'Pick a Gemstone', options: ['Crimson Ruby', 'Deep Sapphire', 'Emerald Green', 'Obsidian Black'] }
+    ];
+
+    const CHARACTERS = [
+      { id: 'c1', name: 'The Lucky One', desc: 'When drawing a special card, draw 2 and choose one.' },
+      { id: 'c2', name: 'The Trickster', desc: '50% chance that negative targeted cards used against you fail.' },
+      { id: 'c3', name: 'The Guardian', desc: 'Once per game, auto-blocks a negative card/targeted effect.' },
+      { id: 'c4', name: 'The Runner', desc: 'First mini-game win advances 2 spaces instead of 1.' },
+      { id: 'c5', name: 'The Strategist', desc: 'Once per game, choose the next round mini-game beforehand.' },
+      { id: 'c6', name: 'The Thief', desc: 'Once per game, secretly target a player to steal their next milestone card.' },
+      { id: 'c7', name: 'The Persistent One', desc: 'First time losing a mini-game with a move penalty, stay in place instead.' },
+      { id: 'c8', name: 'The Gambler', desc: 'Once per game wager before mini-game: win +2 spaces, lose -2 spaces.' },
+      { id: 'c9', name: 'The Magician', desc: 'When drawing a special card, you may replace it with a random card.' },
+      { id: 'c10', name: 'The Charmer', desc: 'Once per game, link secretly to another player: if they win & you don’t, gain +1.' }
+    ];
+
+    const CARD_TEMPLATES = [
+      { id: 'card_legendary', name: 'Legendary Advance', tier: 'Legendary', desc: 'Immediately move forward 3 spaces.' },
+      { id: 'card_comeback', name: 'Comeback', tier: 'Rare', desc: 'First time you lose a mini-game, advance +1 space with winners.' },
+      { id: 'card_setback', name: 'Targeted Setback', tier: 'Rare', desc: 'Target another player and move them backward 2 spaces.' },
+      { id: 'card_step', name: 'Lucky Step', tier: 'Good', desc: 'Immediately move forward 1 space.' },
+      { id: 'card_shield', name: 'Protection Shield', tier: 'Good', desc: 'Blocks the next negative card/effect targeted at you.' },
+      { id: 'card_double', name: 'Double Reward', tier: 'Good', desc: 'Next mini-game win advances 2 spaces instead of 1.' },
+      { id: 'card_theft', name: 'Future Card Theft', tier: 'Good', desc: 'Choose a player and secretly steal their next milestone special card.' },
+      { id: 'card_extra_chance', name: 'Extra Chance', tier: 'Good', desc: 'Grants an extra hit in Blackjack OR an extra retry in Push Your Luck (18 Cards).' },
+      { id: 'card_back_step', name: 'Backward Step', tier: 'Bad', desc: 'Immediately move backward 2 spaces.' },
+      { id: 'card_unlucky_win', name: 'Unlucky Wins', tier: 'Bad', desc: 'Next time you win a mini-game, move backward 1 space instead.' }
+    ];
+
+    const BOT_NAMES = ['Aura', 'Byte', 'Cipher', 'Dexter', 'Echo', 'Frost', 'Gizmo'];
+    const PLAYER_COLORS = ['#6366f1', '#ec4899', '#14b8a6', '#f59e0b', '#8b5cf6', '#06b6d4', '#84cc16', '#f43f5e'];
+
+    const MINI_GAMES = [
+      { id: 'mg1', name: 'Blackjack Showdown' },
+      { id: 'mg2', name: 'Think Outside the Box' },
+      { id: 'mg3', name: 'Push Your Luck (18 Hidden Cards)' },
+      { id: 'mg4', name: 'Guess Number That Completes 15' },
+      { id: 'mg5', name: 'Find Joker & Escape Trap' }
+    ];
+
+    /* =====================================================================
+       CENTRAL GAME ENGINE
+       ===================================================================== */
+    class BoardGameEngine {
+      constructor() {
+        this.players = [];
+        this.deck = [];
+        this.round = 1;
+        this.status = 'SETUP';
+        this.maxPos = 15;
+        this.milestones = [5, 10];
+        this.currentMiniGame = null;
+        this.strategistChoice = null;
+        this.logs = [];
+        this.miniGameState = null;
+        this.pendingResults = null;
+        this.resolvingRound = false;
+        this.milestonesTriggered = {};
+        this.usedQuestionIndices = [];
+        this.selectedPlayerCount = 6;
+        this.selectedBoardLength = 15;
+        this.initDeck();
+      }
+
+      initDeck() {
+        this.deck = [...CARD_TEMPLATES].sort(() => Math.random() - 0.5);
+      }
+
+      drawCardFromDeck() {
+        if (this.deck.length === 0) {
+          this.initDeck();
+          this.log("Deck was exhausted and reshuffled!", "effect");
+        }
+        return this.deck.shift();
+      }
+
+      returnCardToBottom(card) {
+        this.deck.push(card);
+      }
+
+      log(msg, type = 'normal') {
+        this.logs.unshift({ msg, type, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) });
+        this.renderLogs();
+      }
+
+      clearLogs() {
+        this.logs = [];
+        this.renderLogs();
+      }
+
+      saveState() {
+        try {
+          const snapshot = {
+            players: this.players,
+            deck: this.deck,
+            round: this.round,
+            maxPos: this.maxPos,
+            milestones: this.milestones,
+            status: this.status,
+            currentMiniGame: this.currentMiniGame,
+            strategistChoice: this.strategistChoice,
+            milestonesTriggered: this.milestonesTriggered,
+            usedQuestionIndices: this.usedQuestionIndices,
+            logs: this.logs
+          };
+          localStorage.setItem('board_game_ai_save', JSON.stringify(snapshot));
+        } catch(e) {}
+      }
+
+      loadState() {
+        try {
+          const raw = localStorage.getItem('board_game_ai_save');
+          if (raw) {
+            const data = JSON.parse(raw);
+            if (data && data.players && data.players.length > 0) {
+              this.players = data.players;
+              this.deck = data.deck;
+              this.round = data.round;
+              this.maxPos = data.maxPos || 15;
+              this.milestones = data.milestones || [5, 10];
+              this.status = data.status;
+              this.currentMiniGame = data.currentMiniGame;
+              this.strategistChoice = data.strategistChoice;
+              this.milestonesTriggered = data.milestonesTriggered || {};
+              this.usedQuestionIndices = data.usedQuestionIndices || [];
+              this.logs = data.logs || [];
+              return true;
+            }
+          }
+        } catch(e) {}
+        return false;
+      }
+
+      startNewGame(totalPlayers = 6, boardLength = 15) {
+        localStorage.removeItem('board_game_ai_save');
+        this.round = 1;
+        this.maxPos = boardLength;
+        if (boardLength === 10) {
+          this.milestones = [4, 7];
+        } else if (boardLength === 20) {
+          this.milestones = [5, 10, 15];
+        } else {
+          this.milestones = [5, 10];
+        }
+
+        this.initDeck();
+        this.logs = [];
+        this.strategistChoice = null;
+        this.pendingResults = null;
+        this.resolvingRound = false;
+        this.miniGameState = null;
+        this.milestonesTriggered = {};
+        this.milestones.forEach(m => this.milestonesTriggered[m] = false);
+        this.usedQuestionIndices = [];
+
+        document.getElementById('modal-container').innerHTML = '';
+
+        const shuffledChars = [...CHARACTERS].sort(() => Math.random() - 0.5);
+
+        this.players = [];
+        this.players.push({
+          id: 0,
+          name: 'You (Human)',
+          isHuman: true,
+          color: PLAYER_COLORS[0],
+          pos: 0,
+          char: shuffledChars[0],
+          charUsed: false,
+          activeCharOption: null,
+          cards: [],
+          hasExtraChance: false,
+          reservedTheftBy: null,
+          hasWonMiniGame: false,
+          unluckyWinActive: false,
+          doubleRewardActive: false,
+          hasShield: false,
+          hasComeback: false
+        });
+
+        for (let i = 1; i < totalPlayers; i++) {
+          this.players.push({
+            id: i,
+            name: `Bot ${BOT_NAMES[i - 1]}`,
+            isHuman: false,
+            color: PLAYER_COLORS[i % PLAYER_COLORS.length],
+            pos: 0,
+            char: shuffledChars[i],
+            charUsed: false,
+            activeCharOption: null,
+            cards: [],
+            hasExtraChance: false,
+            reservedTheftBy: null,
+            hasWonMiniGame: false,
+            unluckyWinActive: false,
+            doubleRewardActive: false,
+            hasShield: false,
+            hasComeback: false
+          });
+        }
+
+        this.log(`Game started! ${totalPlayers} players, ${boardLength} blocks to win.`, 'win');
+        this.renderAll();
+        this.triggerBotPreRoundDecisions();
+        this.startMiniGameRound();
+      }
+
+      triggerBotPreRoundDecisions() {
+        this.players.filter(p => !p.isHuman).forEach(bot => {
+          if (!bot.charUsed) {
+            if (bot.char.id === 'c5' && !this.strategistChoice && Math.random() < 0.25) {
+              bot.charUsed = true;
+              const pick = MINI_GAMES[Math.floor(Math.random() * MINI_GAMES.length)];
+              this.strategistChoice = pick;
+              this.log(`🧠 ${bot.name} (Strategist) chose ${pick.name}!`, 'effect');
+            } else if (bot.char.id === 'c6' && Math.random() < 0.3) {
+              const others = this.players.filter(p => p.id !== bot.id);
+              if (others.length > 0) {
+                bot.charUsed = true;
+                const chosenTarget = others[Math.floor(Math.random() * others.length)];
+                chosenTarget.reservedTheftBy = bot.id;
+                this.log(`🦹 ${bot.name} (Thief) secretly prepared a milestone ambush!`, 'effect');
+              }
+            } else if (bot.char.id === 'c8' && Math.random() < 0.2) {
+              bot.charUsed = true;
+              bot.activeCharOption = 'WAGER';
+              this.log(`🎲 ${bot.name} (The Gambler) placed a wager!`, 'effect');
+            } else if (bot.char.id === 'c10' && Math.random() < 0.25) {
+              bot.charUsed = true;
+              const leader = [...this.players].sort((a,b) => b.pos - a.pos)[0];
+              bot.activeCharOption = leader.id;
+            }
+          }
+        });
+      }
+
+      movePlayer(playerId, delta, reason = '') {
+        const p = this.players.find(x => x.id === playerId);
+        if (!p) return;
+
+        const oldPos = p.pos;
+        p.pos = Math.max(0, p.pos + delta);
+        const actualDelta = p.pos - oldPos;
+        const sign = actualDelta >= 0 ? `+${actualDelta}` : `${actualDelta}`;
+
+        this.log(`${p.name} moves ${sign} spaces (${p.pos}/${this.maxPos}) ${reason ? 'via ' + reason : ''}.`, actualDelta >= 0 ? 'win' : 'loss');
+
+        this.milestones.forEach(stage => {
+          if (p.pos >= stage && !this.milestonesTriggered[stage]) {
+            this.milestonesTriggered[stage] = true;
+            this.log(`🌟 FIRST PLAYER reached Stage ${stage}! EVERY player receives a Special Card!`, 'effect');
+            this.showGlobalMilestoneAlert(stage);
+          }
+        });
+
+        if (p.pos >= this.maxPos) {
+          this.status = 'GAME_OVER';
+          this.renderAll();
+          this.showWinnerModal(p);
+          return;
+        }
+
+        this.renderBoard();
+        this.renderPlayers();
+      }
+
+      showGlobalMilestoneAlert(stage) {
+        const modal = document.getElementById('modal-container');
+        modal.innerHTML = `
+          <div class="modal-overlay">
+            <div class="modal" style="text-align:center;">
+              <div style="font-size:3rem; margin-bottom:8px;">🌟</div>
+              <h2 style="color:var(--gold);">Milestone Stage ${stage} Reached!</h2>
+              <p style="color:var(--text-muted); margin: 12px 0;">First player reached space ${stage}. Everyone draws a Special Card!</p>
+              <button class="gold" style="width:100%;" onclick="game.resolveGlobalDrawSequence(${stage})">Draw All Cards</button>
+            </div>
+          </div>
+        `;
+      }
+
+      resolveGlobalDrawSequence(stage) {
+        document.getElementById('modal-container').innerHTML = '';
+        this.players.forEach(player => {
+          this.handleMilestoneDraw(player, stage);
+        });
+      }
+
+      handleMilestoneDraw(player, milestoneLevel) {
+        if (player.reservedTheftBy !== null) {
+          const thief = this.players.find(x => x.id === player.reservedTheftBy);
+          player.reservedTheftBy = null;
+          const stolenCard = this.drawCardFromDeck();
+          this.log(`🕵️ SURPRISE CARD THEFT! ${player.name}'s milestone card was stolen by ${thief.name}!`, 'loss');
+          if (player.isHuman) {
+            this.showAmbushTheftModal(thief, stolenCard);
+          }
+          this.giveCardToPlayer(thief, stolenCard);
+          return;
+        }
+
+        if (player.char.id === 'c1') {
+          const c1 = this.drawCardFromDeck();
+          const c2 = this.drawCardFromDeck();
+          if (player.isHuman) {
+            this.promptLuckyOneChoice(player, c1, c2);
+          } else {
+            const choice = (c1.tier === 'Legendary' || c1.tier === 'Rare') ? c1 : c2;
+            const other = choice === c1 ? c2 : c1;
+            this.returnCardToBottom(other);
+            this.giveCardToPlayer(player, choice);
+          }
+          return;
+        }
+
+        const card = this.drawCardFromDeck();
+
+        if (player.char.id === 'c9') {
+          if (player.isHuman) {
+            this.promptMagicianChoice(player, card);
+            return;
+          } else {
+            if (card.tier === 'Bad') {
+              this.returnCardToBottom(card);
+              const replaced = this.drawCardFromDeck();
+              this.log(`${player.name} (Magician) replaces ${card.name} with ${replaced.name}!`, 'effect');
+              this.giveCardToPlayer(player, replaced);
+              return;
+            }
+          }
+        }
+
+        this.giveCardToPlayer(player, card);
+      }
+
+      showAmbushTheftModal(thief, stolenCard) {
+        const modal = document.getElementById('modal-container');
+        modal.innerHTML = `
+          <div class="modal-overlay">
+            <div class="modal" style="text-align:center;">
+              <div style="font-size:3rem; margin-bottom:8px;">🕵️</div>
+              <h2 style="color:var(--red);">AMBUSH! Card Stolen!</h2>
+              <p style="margin:10px 0;"><strong>${thief.name}</strong> secretly targeted you earlier and intercepted your card!</p>
+              <div class="card-presentation ${stolenCard.tier}">
+                ${getSpecialCardArtSVG(stolenCard.id)}
+                <h3 style="margin-top:8px;">${stolenCard.name}</h3>
+                <span class="tag gold">${stolenCard.tier}</span>
+                <p style="font-size:0.85rem; color:var(--text-muted); margin-top:6px;">${stolenCard.desc}</p>
+              </div>
+              <button class="secondary" style="width:100%;" onclick="document.getElementById('modal-container').innerHTML=''">Acknowledge Loss</button>
+            </div>
+          </div>
+        `;
+      }
+
+      giveCardToPlayer(player, card) {
+        this.log(`${player.name} received: [${card.name}] (${card.tier})!`, 'effect');
+
+        if (player.isHuman) {
+          this.showCardDrawnPresentationModal(card);
+        }
+
+        if (card.id === 'card_legendary') {
+          this.movePlayer(player.id, 3, 'Legendary Advance');
+        } else if (card.id === 'card_step') {
+          this.movePlayer(player.id, 1, 'Lucky Step');
+        } else if (card.id === 'card_back_step') {
+          this.applyNegativeEffect(player, 2, 'Backward Step');
+        } else if (card.id === 'card_shield') {
+          player.hasShield = true;
+          this.log(`${player.name} activated a Protection Shield!`, 'effect');
+        } else if (card.id === 'card_comeback') {
+          player.hasComeback = true;
+        } else if (card.id === 'card_double') {
+          player.doubleRewardActive = true;
+        } else if (card.id === 'card_unlucky_win') {
+          player.unluckyWinActive = true;
+        } else if (card.id === 'card_extra_chance') {
+          player.hasExtraChance = true;
+          this.log(`${player.name} holds an Extra Chance card!`, 'win');
+        } else if (card.id === 'card_setback') {
+          if (player.isHuman) {
+            this.promptTargetPlayer(player, (targetId) => {
+              const target = this.players.find(p => p.id === targetId);
+              this.applyNegativeEffect(target, 2, `Targeted Setback from ${player.name}`);
+            });
+          } else {
+            const others = this.players.filter(p => p.id !== player.id);
+            others.sort((a,b) => b.pos - a.pos);
+            this.applyNegativeEffect(others[0], 2, `Targeted Setback from ${player.name}`);
+          }
+        } else if (card.id === 'card_theft') {
+          if (player.isHuman) {
+            this.promptTargetPlayer(player, (targetId) => {
+              const target = this.players.find(p => p.id === targetId);
+              target.reservedTheftBy = player.id;
+              this.log(`You secretly placed a theft trap on ${target.name}!`, 'effect');
+            });
+          } else {
+            const others = this.players.filter(p => p.id !== player.id);
+            if (others.length > 0) {
+              others.sort((a,b) => b.pos - a.pos);
+              others[0].reservedTheftBy = player.id;
+              this.log(`A secret card theft trap was laid by an opponent!`, 'effect');
+            }
+          }
+        }
+
+        player.cards.push(card);
+        this.renderPlayers();
+      }
+
+      showCardDrawnPresentationModal(card) {
+        const modal = document.getElementById('modal-container');
+        modal.innerHTML = `
+          <div class="modal-overlay">
+            <div class="modal" style="text-align:center;">
+              <h3 style="color:var(--gold); font-size:1.1rem;">✨ SPECIAL CARD DRAWN ✨</h3>
+              <div class="card-presentation ${card.tier}">
+                ${getSpecialCardArtSVG(card.id, 70)}
+                <h2 style="margin-top:10px; font-size:1.3rem;">${card.name}</h2>
+                <span class="tag ${card.tier === 'Legendary' ? 'gold' : card.tier === 'Rare' ? 'purple' : card.tier === 'Good' ? 'green' : ''}" style="margin:6px 0; display:inline-block;">
+                  ${card.tier} Tier
+                </span>
+                <p style="color:#cbd5e1; font-size:0.9rem; margin-top:8px; line-height:1.4;">${card.desc}</p>
+              </div>
+              <button class="gold" style="width:100%;" onclick="document.getElementById('modal-container').innerHTML=''">Keep & Continue</button>
+            </div>
+          </div>
+        `;
+      }
+
+      applyNegativeEffect(target, setbackSteps, sourceDescription) {
+        if (target.char.id === 'c2') {
+          if (Math.random() < 0.5) {
+            this.log(`🃏 The Trickster's passive tripped up the attack! ${sourceDescription} FAILED against ${target.name}!`, 'win');
+            return;
+          }
+        }
+
+        if (target.char.id === 'c3' && !target.charUsed) {
+          target.charUsed = true;
+          this.log(`🛡️ Guardian Ability Activated! ${target.name} blocked the negative effect completely!`, 'win');
+          this.renderPlayers();
+          return;
+        }
+
+        if (target.hasShield) {
+          target.hasShield = false;
+          this.log(`🛡️ Protection Shield absorbed the negative effect for ${target.name}!`, 'win');
+          this.renderPlayers();
+          return;
+        }
+
+        this.movePlayer(target.id, -setbackSteps, sourceDescription);
+      }
+
+      showRoundTransitionScreen() {
+        if (this.status === 'GAME_OVER') return;
+        this.status = 'PRE_ROUND';
+        this.resolvingRound = false;
+        this.pendingResults = null;
+        document.getElementById('round-counter').innerText = `Round ${this.round}`;
+
+        this.triggerBotPreRoundDecisions();
+
+        const human = this.players[0];
+        let abilitiesHtml = '';
+        if (!human.charUsed) {
+          if (human.char.id === 'c5') {
+            abilitiesHtml += `<button class="gold" onclick="game.openStrategistSelector()">🧠 Strategist: Choose Mini-Game</button>`;
+          } else if (human.char.id === 'c6') {
+            abilitiesHtml += `<button class="secondary" onclick="game.activateHumanThief()">🦹 Thief: Secret Card Steal</button>`;
+          } else if (human.char.id === 'c8' && human.activeCharOption !== 'WAGER') {
+            abilitiesHtml += `<button class="gold" onclick="game.activateHumanGambler()">🎲 Gambler: Wager (+2 / -2)</button>`;
+          } else if (human.char.id === 'c10' && human.activeCharOption === null) {
+            abilitiesHtml += `<button class="secondary" onclick="game.activateHumanCharmer()">✨ Charmer: Link Player</button>`;
+          }
+        }
+
+        document.getElementById('arena-panel').innerHTML = `
+          <div style="text-align:center; padding: 24px 12px; display:flex; flex-direction:column; align-items:center; justify-content:center; flex:1;">
+            <div style="font-size:3rem; margin-bottom:8px;">🎲</div>
+            <h2 style="color:var(--gold); font-size:1.6rem; margin-bottom:6px;">Ready for Round ${this.round}!</h2>
+            <p style="color:var(--text-muted); max-width:440px; margin-bottom:14px; font-size:0.9rem;">
+              Board positions updated (${this.maxPos} blocks total). Check standings and launch the next mini-game!
+            </p>
+            ${this.strategistChoice ? `<div style="color:var(--gold); font-weight:bold; margin-bottom:10px;">(Strategist Chosen: ${this.strategistChoice.name})</div>` : ''}
+            ${abilitiesHtml ? `<div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-bottom:16px;">${abilitiesHtml}</div>` : ''}
+            <button class="success" style="font-size:1.15rem; padding:12px 30px; width:100%; max-width:320px;" onclick="game.startMiniGameRound()">
+              ▶ Play Round ${this.round} Mini-Game
+            </button>
+          </div>
+        `;
+
+        this.renderAll();
+      }
+
+      startMiniGameRound() {
+        let selectedGame = this.strategistChoice;
+        if (!selectedGame) {
+          selectedGame = MINI_GAMES[Math.floor(Math.random() * MINI_GAMES.length)];
+        }
+        this.currentMiniGame = selectedGame;
+        this.strategistChoice = null;
+        this.status = 'MINIGAME';
+        document.getElementById('round-counter').innerText = `Round ${this.round}`;
+        this.log(`🚩 Round ${this.round} Mini-Game: ${selectedGame.name}!`, 'win');
+        
+        this.launchMiniGame(selectedGame.id);
+
+        setTimeout(() => {
+          document.getElementById('arena-panel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 100);
+      }
+
+      launchMiniGame(mgId) {
+        if (mgId === 'mg1') this.setupBlackjack();
+        else if (mgId === 'mg2') this.setupThinkOutsideBox();
+        else if (mgId === 'mg3') this.setupPushYourLuck();
+        else if (mgId === 'mg4') this.setupGuess15();
+        else if (mgId === 'mg5') this.setupJokerTrap();
+      }
+
+      getInGameAbilityBar() {
+        const human = this.players[0];
+        if (!human || human.charUsed) return '';
+        let btn = '';
+        if (human.char.id === 'c8' && human.activeCharOption !== 'WAGER') {
+          btn = `<button class="gold" style="min-height:36px; padding:4px 10px; font-size:0.75rem;" onclick="game.activateHumanGambler()">🎲 Gambler Wager (+2 / -2)</button>`;
+        } else if (human.char.id === 'c10' && human.activeCharOption === null) {
+          btn = `<button class="secondary" style="min-height:36px; padding:4px 10px; font-size:0.75rem;" onclick="game.activateHumanCharmer()">✨ Charmer Link</button>`;
+        }
+        return btn ? `<div style="display:flex; align-items:center; gap:6px;">${btn}</div>` : '';
+      }
+
+      /* ===================================================================
+         MINI-GAME 1: BLACKJACK SHOWDOWN
+         =================================================================== */
+      setupBlackjack() {
+        const createDeck = () => {
+          const suits = ['♠', '♥', '♦', '♣'];
+          const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+          const deck = [];
+          for (let s of suits) {
+            for (let v of values) {
+              let num = parseInt(v);
+              if (['J', 'Q', 'K'].includes(v)) num = 10;
+              if (v === 'A') num = 11;
+              deck.push({ suit: s, val: v, num: num, isRed: s === '♥' || s === '♦' });
+            }
+          }
+          return deck.sort(() => Math.random() - 0.5);
+        };
+
+        const deck = createDeck();
+        const bjPlayers = this.players.map(p => ({
+          player: p,
+          hand: [deck.pop(), deck.pop()],
+          isStand: false,
+          isBusted: false
+        }));
+
+        this.miniGameState = {
+          type: 'mg1',
+          deck: deck,
+          bjPlayers: bjPlayers
+        };
+
+        this.renderBlackjack();
+      }
+
+      calcHandScore(hand) {
+        let score = 0;
+        let aces = 0;
+        hand.forEach(c => {
+          score += c.num;
+          if (c.val === 'A') aces++;
+        });
+        while (score > 21 && aces > 0) {
+          score -= 10;
+          aces--;
+        }
+        return score;
+      }
+
+      renderBlackjack() {
+        const state = this.miniGameState;
+        const human = state.bjPlayers.find(p => p.player.isHuman);
+        const humanScore = this.calcHandScore(human.hand);
+
+        let html = `
+          <div class="arena-header">
+            <div>
+              <h2>🃏 Mini-Game: Blackjack</h2>
+              <p style="color:var(--text-muted); font-size:0.8rem;">Top 2 scores advance +1. Lowest valid moves -1.</p>
+            </div>
+            ${this.getInGameAbilityBar()}
+          </div>
+
+          <div style="background:#0f172a; padding:12px; border-radius:10px;">
+            <h4 style="margin-bottom:6px; font-size:0.95rem;">Your Hand (Total: <span style="color:var(--gold); font-size:1.2rem;">${humanScore}</span> ${humanScore > 21 ? 'BUSTED!' : ''})</h4>
+            <div class="cards-row">
+              ${human.hand.map(c => `
+                <div class="deck-playing-card ${c.isRed ? 'red' : ''}">
+                  <div>${c.val} ${c.suit}</div>
+                  <div style="font-size:1.4rem; text-align:center;">${c.suit}</div>
+                  <div style="text-align:right;">${c.val}</div>
+                </div>
+              `).join('')}
+            </div>
+
+            <div style="margin-top:14px; display:flex; gap:8px; flex-wrap:wrap;">
+              <button style="flex:1;" onclick="game.blackjackHit()" ${human.isStand || humanScore >= 21 ? 'disabled' : ''}>Hit</button>
+              <button class="secondary" style="flex:1;" onclick="game.blackjackStand()" ${human.isStand ? 'disabled' : ''}>Stand</button>
+              ${human.player.hasExtraChance ? `
+                <button class="gold" style="width:100%;" onclick="game.useExtraChanceInBlackjack()">⭐ Use Extra Chance Card (Free Hit)</button>
+              ` : ''}
+            </div>
+          </div>
+
+          <h4 style="margin-top:8px; font-size:0.85rem; color:var(--text-muted);">Opponents</h4>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:8px;">
+            ${state.bjPlayers.filter(bp => !bp.player.isHuman).map(bp => {
+              const sc = this.calcHandScore(bp.hand);
+              return `
+                <div style="background:#0f172a; padding:8px; border-radius:6px; border:1px solid #334155; font-size:0.8rem;">
+                  <div style="font-weight:bold; color:${bp.player.color}">${bp.player.name}</div>
+                  <div style="color:var(--text-muted); font-size:0.75rem;">Cards: ${bp.hand.length} | ${bp.isStand ? 'Stood' : 'Thinking...'}</div>
+                  <div style="margin-top:2px;">${human.isStand ? `Score: <strong>${sc}</strong> ${sc > 21 ? '❌' : '✔️'}` : '🂠 🂠 Hidden'}</div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        `;
+
+        document.getElementById('arena-panel').innerHTML = html;
+      }
+
+      blackjackHit() {
+        const state = this.miniGameState;
+        const human = state.bjPlayers.find(p => p.player.isHuman);
+        human.hand.push(state.deck.pop());
+        if (this.calcHandScore(human.hand) > 21) {
+          human.isStand = true;
+          human.isBusted = true;
+          this.log("You went bust in Blackjack!", "loss");
+          setTimeout(() => this.resolveBlackjackBots(), 600);
+        }
+        this.renderBlackjack();
+      }
+
+      blackjackStand() {
+        const state = this.miniGameState;
+        const human = state.bjPlayers.find(p => p.player.isHuman);
+        human.isStand = true;
+        this.renderBlackjack();
+        this.resolveBlackjackBots();
+      }
+
+      useExtraChanceInBlackjack() {
+        const state = this.miniGameState;
+        const human = state.bjPlayers.find(p => p.player.isHuman);
+        if (!human.player.hasExtraChance) return;
+        human.player.hasExtraChance = false;
+        human.hand.push(state.deck.pop());
+        this.log("You consumed Extra Chance for a bonus hit in Blackjack!", "win");
+        
+        const score = this.calcHandScore(human.hand);
+        if (score > 21) {
+          human.isStand = true;
+          human.isBusted = true;
+          this.log("Extra Chance hit resulted in a bust!", "loss");
+          this.renderBlackjack();
+          setTimeout(() => this.resolveBlackjackBots(), 700);
+          return;
+        }
+        this.renderBlackjack();
+      }
+
+      resolveBlackjackBots() {
+        const state = this.miniGameState;
+        state.bjPlayers.filter(bp => !bp.player.isHuman).forEach(bp => {
+          while (true) {
+            let sc = this.calcHandScore(bp.hand);
+            if (sc < 16) {
+              bp.hand.push(state.deck.pop());
+            } else if (sc === 16 && Math.random() < 0.3) {
+              bp.hand.push(state.deck.pop());
+            } else {
+              bp.isStand = true;
+              break;
+            }
+          }
+        });
+
+        const validScores = [];
+        state.bjPlayers.forEach(bp => {
+          const sc = this.calcHandScore(bp.hand);
+          bp.finalScore = sc;
+          bp.busted = sc > 21;
+          if (!bp.busted) validScores.push({ id: bp.player.id, score: sc });
+        });
+
+        validScores.sort((a,b) => b.score - a.score);
+
+        let winners = [];
+        let losers = [];
+
+        if (validScores.length === 0) {
+          losers = state.bjPlayers.map(p => p.player.id);
+        } else {
+          const highest1 = validScores[0].score;
+          const top1Players = validScores.filter(v => v.score === highest1).map(v => v.id);
+          winners.push(...top1Players);
+
+          const remaining = validScores.filter(v => v.score < highest1);
+          if (remaining.length > 0 && winners.length < 2) {
+            const highest2 = remaining[0].score;
+            const top2Players = remaining.filter(v => v.score === highest2).map(v => v.id);
+            winners.push(...top2Players);
+          }
+
+          const lowestValidScore = validScores[validScores.length - 1].score;
+          losers = validScores.filter(v => v.score === lowestValidScore).map(v => v.id);
+        }
+
+        this.setPendingResults(winners, losers, 1, 1);
+
+        let html = `
+          <div class="arena-header">
+            <h2>🃏 Blackjack — Final Results</h2>
+          </div>
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:8px; margin: 12px 0;">
+            ${state.bjPlayers.map(bp => `
+              <div style="background:#0f172a; padding:8px; border-radius:6px; border:2px solid ${winners.includes(bp.player.id) ? 'var(--green)' : losers.includes(bp.player.id) ? 'var(--red)' : '#334155'}; font-size:0.85rem;">
+                <div style="font-weight:bold; color:${bp.player.color};">${bp.player.name}</div>
+                <div>Score: <strong>${bp.finalScore}</strong> ${bp.busted ? '(BUST)' : ''}</div>
+                <div style="font-size:0.75rem; margin-top:3px;">
+                  ${winners.includes(bp.player.id) ? '🏆 WINNER (+1)' : losers.includes(bp.player.id) ? '❌ LOSER (-1)' : 'Stays'}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+          <button class="success" style="width:100%;" onclick="game.applyPendingResults()">Proceed to Board Updates</button>
+        `;
+        document.getElementById('arena-panel').innerHTML = html;
+      }
+
+      /* ===================================================================
+         MINI-GAME 2: THINK OUTSIDE THE BOX
+         =================================================================== */
+      setupThinkOutsideBox() {
+        let availableIndices = EXPANDED_QUESTIONS.map((_, i) => i).filter(i => !this.usedQuestionIndices.includes(i));
+        if (availableIndices.length < 5) {
+          this.usedQuestionIndices = [];
+          availableIndices = EXPANDED_QUESTIONS.map((_, i) => i);
+        }
+        availableIndices.sort(() => Math.random() - 0.5);
+        const selectedIndices = availableIndices.slice(0, 5);
+        this.usedQuestionIndices.push(...selectedIndices);
+
+        const chosenQuestions = selectedIndices.map(i => EXPANDED_QUESTIONS[i]);
+
+        this.miniGameState = {
+          type: 'mg2',
+          rounds: chosenQuestions,
+          currentRoundIdx: 0,
+          scores: {},
+          roundHistory: []
+        };
+        this.players.forEach(p => this.miniGameState.scores[p.id] = 0);
+        this.renderThinkOutsideBoxRound();
+      }
+
+      renderThinkOutsideBoxRound() {
+        const state = this.miniGameState;
+        const currentQ = state.rounds[state.currentRoundIdx];
+
+        let html = `
+          <div class="arena-header">
+            <div>
+              <h2>📦 Think Outside the Box (${state.currentRoundIdx + 1}/5)</h2>
+              <p style="color:var(--text-muted); font-size:0.8rem;">Select the LEAST popular choice!</p>
+            </div>
+            ${this.getInGameAbilityBar()}
+          </div>
+          <div style="background:#0f172a; padding:14px; border-radius:10px; margin: 8px 0;">
+            <h3 style="color:#e2e8f0; font-size:1.1rem; margin-bottom:8px;">${currentQ.q}</h3>
+            <div class="choice-button-grid">
+              ${currentQ.options.map(opt => `
+                <button class="secondary" style="padding:12px; font-size:0.95rem; text-align:left; justify-content:flex-start;" onclick="game.thinkBoxChoose('${opt.replace(/'/g, "\\'")}')">
+                  ${opt}
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        `;
+        document.getElementById('arena-panel').innerHTML = html;
+      }
+
+      thinkBoxChoose(humanChoice) {
+        const state = this.miniGameState;
+        const currentQ = state.rounds[state.currentRoundIdx];
+        const picks = {};
+
+        picks[this.players[0].id] = humanChoice;
+
+        this.players.filter(p => !p.isHuman).forEach(bot => {
+          const r = Math.random();
+          if (r < 0.4) {
+            picks[bot.id] = currentQ.options[Math.floor(Math.random() * currentQ.options.length)];
+          } else if (r < 0.7) {
+            picks[bot.id] = currentQ.options[currentQ.options.length - 1];
+          } else {
+            picks[bot.id] = currentQ.options[0];
+          }
+        });
+
+        const voteCounts = {};
+        currentQ.options.forEach(opt => voteCounts[opt] = 0);
+        Object.values(picks).forEach(v => voteCounts[v] = (voteCounts[v] || 0) + 1);
+
+        const selectedVotes = Object.entries(voteCounts).filter(([_, count]) => count > 0);
+        const minCount = Math.min(...selectedVotes.map(([_, count]) => count));
+        const leastPopularOptions = selectedVotes.filter(([_, count]) => count === minCount).map(([opt]) => opt);
+
+        const roundScorers = [];
+        this.players.forEach(p => {
+          if (leastPopularOptions.includes(picks[p.id])) {
+            state.scores[p.id] += 1;
+            roundScorers.push(p.name);
+          }
+        });
+
+        state.roundHistory.push({ round: state.currentRoundIdx + 1, picks, voteCounts, leastPopularOptions, roundScorers });
+
+        let html = `
+          <div class="arena-header">
+            <h2>Round ${state.currentRoundIdx + 1} Results</h2>
+          </div>
+          <div style="background:#0f172a; padding:12px; border-radius:10px;">
+            <div style="display:flex; gap:6px; margin: 8px 0; flex-wrap:wrap;">
+              ${Object.entries(voteCounts).map(([opt, cnt]) => `
+                <div style="background:#1e293b; padding:6px 10px; border-radius:6px; font-size:0.85rem; border: 1px solid ${leastPopularOptions.includes(opt) ? 'var(--gold)' : '#334155'}">
+                  <strong>${opt}</strong>: ${cnt} ${leastPopularOptions.includes(opt) ? '⭐ (+1 pt)' : ''}
+                </div>
+              `).join('')}
+            </div>
+            <p style="font-size:0.85rem;">Scored: <strong>${roundScorers.join(', ') || 'None'}</strong></p>
+          </div>
+          <div style="margin-top:12px;">
+            ${state.currentRoundIdx < 4 ? `
+              <button style="width:100%;" onclick="game.nextThinkBoxRound()">Next Question (${state.currentRoundIdx + 2}/5)</button>
+            ` : `
+              <button class="success" style="width:100%;" onclick="game.finishThinkBox()">Calculate Totals</button>
+            `}
+          </div>
+        `;
+        document.getElementById('arena-panel').innerHTML = html;
+      }
+
+      nextThinkBoxRound() {
+        this.miniGameState.currentRoundIdx++;
+        this.renderThinkOutsideBoxRound();
+      }
+
+      finishThinkBox() {
+        const state = this.miniGameState;
+        const sorted = this.players.map(p => ({ id: p.id, name: p.name, score: state.scores[p.id] })).sort((a,b) => b.score - a.score);
+        const maxScore = sorted[0].score;
+        const minScore = sorted[sorted.length - 1].score;
+
+        const winners = sorted.filter(s => s.score === maxScore).map(s => s.id);
+        const losers = sorted.filter(s => s.score === minScore).map(s => s.id);
+
+        this.setPendingResults(winners, losers, 2, 1);
+
+        let html = `
+          <div class="arena-header">
+            <h2>📦 Final Standings</h2>
+          </div>
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:8px; margin: 12px 0;">
+            ${sorted.map(s => `
+              <div style="background:#0f172a; padding:8px; border-radius:6px; border:2px solid ${winners.includes(s.id) ? 'var(--green)' : losers.includes(s.id) ? 'var(--red)' : '#334155'}; font-size:0.85rem;">
+                <div style="font-weight:bold;">${s.name}</div>
+                <div>Points: <strong>${s.score}</strong></div>
+                <div style="font-size:0.75rem;">
+                  ${winners.includes(s.id) ? '🏆 1st (+2)' : losers.includes(s.id) ? '❌ Last (-1)' : 'Stays'}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+          <button class="success" style="width:100%;" onclick="game.applyPendingResults()">Proceed to Board Updates</button>
+        `;
+        document.getElementById('arena-panel').innerHTML = html;
+      }
+
+      /* ===================================================================
+         MINI-GAME 3: PUSH YOUR LUCK
+         =================================================================== */
+      setupPushYourLuck() {
+        const values = [-6, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, -5, 6];
+        const shuffled = values.sort(() => Math.random() - 0.5);
+
+        this.miniGameState = {
+          type: 'mg3',
+          pool: shuffled,
+          humanRetriesLeft: 2,
+          humanSelectedIndices: [],
+          humanAttemptScore: null,
+          botResults: {}
+        };
+
+        this.players.filter(p => !p.isHuman).forEach(bot => {
+          let retries = 2;
+          let bestScore = -999;
+          while (retries >= 0) {
+            const botCards = [...shuffled].sort(() => Math.random() - 0.5).slice(0, 3);
+            const sum = botCards.reduce((a,b) => a + b, 0);
+            bestScore = sum;
+            if (sum >= 9 || retries === 0) break;
+            retries--;
+          }
+          this.miniGameState.botResults[bot.id] = bestScore;
+        });
+
+        this.renderPushYourLuck();
+      }
+
+      renderPushYourLuck() {
+        const state = this.miniGameState;
+        const human = this.players[0];
+
+        let html = `
+          <div class="arena-header">
+            <div>
+              <h2>🍀 Push Your Luck (18 Cards)</h2>
+              <p style="color:var(--text-muted); font-size:0.8rem;">Pick 3 cards. Retries remaining: <strong>${state.humanRetriesLeft}</strong></p>
+            </div>
+            ${this.getInGameAbilityBar()}
+          </div>
+
+          <div class="grid-pick">
+            ${state.pool.map((val, idx) => {
+              const isSelected = state.humanSelectedIndices.includes(idx);
+              const isRevealed = state.humanAttemptScore !== null && isSelected;
+              return `
+                <div class="mystery-card ${isSelected ? 'selected' : ''} ${isRevealed ? 'revealed' : ''}" 
+                     onclick="${state.humanAttemptScore === null ? `game.pickPushLuckCard(${idx})` : ''}">
+                  ${isRevealed ? (val >= 0 ? `+${val}` : val) : isSelected ? '✓' : '❓'}
+                </div>
+              `;
+            }).join('')}
+          </div>
+
+          ${state.humanAttemptScore !== null ? `
+            <div style="background:#0f172a; padding:12px; border-radius:8px; margin: 8px 0;">
+              <h3>Your Score: <span style="color:var(--gold); font-size:1.3rem;">${state.humanAttemptScore}</span></h3>
+              <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
+                <button class="success" style="flex:1;" onclick="game.pushLuckKeep()">Keep Score</button>
+                <button class="gold" style="flex:1;" onclick="game.pushLuckRetry()" ${state.humanRetriesLeft <= 0 ? 'disabled' : ''}>
+                  🔄 Retry (${state.humanRetriesLeft} left)
+                </button>
+              </div>
+            </div>
+          ` : `
+            <p style="color:var(--text-muted); font-size:0.85rem;">Tap any 3 cards to reveal your score.</p>
+          `}
+
+          ${human.hasExtraChance ? `
+            <button class="gold" style="width:100%; margin-top:6px;" onclick="game.useExtraChanceInPushLuck()">
+              ⭐ Use Extra Chance Card (+1 Retry)
+            </button>
+          ` : ''}
+        `;
+        document.getElementById('arena-panel').innerHTML = html;
+      }
+
+      pickPushLuckCard(idx) {
+        const state = this.miniGameState;
+        if (state.humanSelectedIndices.includes(idx)) return;
+        state.humanSelectedIndices.push(idx);
+
+        if (state.humanSelectedIndices.length === 3) {
+          const total = state.humanSelectedIndices.reduce((sum, i) => sum + state.pool[i], 0);
+          state.humanAttemptScore = total;
+        }
+        this.renderPushYourLuck();
+      }
+
+      pushLuckRetry() {
+        const state = this.miniGameState;
+        if (state.humanRetriesLeft <= 0) return;
+        state.humanRetriesLeft--;
+        state.pool = state.pool.sort(() => Math.random() - 0.5);
+        state.humanSelectedIndices = [];
+        state.humanAttemptScore = null;
+        this.log(`Cards reshuffled on the board!`, 'effect');
+        this.renderPushYourLuck();
+      }
+
+      useExtraChanceInPushLuck() {
+        const state = this.miniGameState;
+        const human = this.players[0];
+        if (!human.hasExtraChance) return;
+        human.hasExtraChance = false;
+        state.humanRetriesLeft++;
+        this.log("Extra Chance consumed: +1 retry added!", "win");
+        this.renderPushYourLuck();
+      }
+
+      pushLuckKeep() {
+        const state = this.miniGameState;
+        const results = [];
+        results.push({ id: this.players[0].id, score: state.humanAttemptScore });
+        this.players.filter(p => !p.isHuman).forEach(bot => {
+          results.push({ id: bot.id, score: state.botResults[bot.id] });
+        });
+
+        results.sort((a,b) => b.score - a.score);
+        const maxScore = results[0].score;
+        const minScore = results[results.length - 1].score;
+
+        const winners = results.filter(r => r.score === maxScore).map(r => r.id);
+        const losers = results.filter(r => r.score === minScore).map(r => r.id);
+
+        this.setPendingResults(winners, losers, 1, 1);
+
+        let html = `
+          <div class="arena-header">
+            <h2>🍀 Push Your Luck — Final Results</h2>
+          </div>
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:8px; margin: 12px 0;">
+            ${results.map(r => {
+              const p = this.players.find(x => x.id === r.id);
+              return `
+                <div style="background:#0f172a; padding:8px; border-radius:6px; border:2px solid ${winners.includes(r.id) ? 'var(--green)' : losers.includes(r.id) ? 'var(--red)' : '#334155'}; font-size:0.85rem;">
+                  <div style="font-weight:bold; color:${p.color};">${p.name}</div>
+                  <div>Score: <strong>${r.score}</strong></div>
+                  <div style="font-size:0.75rem;">
+                    ${winners.includes(r.id) ? '🏆 WINNER (+1)' : losers.includes(r.id) ? '❌ LOSER (-1)' : 'Stays'}
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+          <button class="success" style="width:100%;" onclick="game.applyPendingResults()">Proceed to Board Updates</button>
+        `;
+        document.getElementById('arena-panel').innerHTML = html;
+      }
+
+      /* ===================================================================
+         MINI-GAME 4: GUESS THE NUMBER THAT COMPLETES 15
+         =================================================================== */
+      setupGuess15() {
+        this.miniGameState = {
+          type: 'mg4',
+          sharedCard: Math.floor(Math.random() * 10) + 1,
+          choices: {}
+        };
+
+        let html = `
+          <div class="arena-header">
+            <div>
+              <h2>🎯 Completes 15</h2>
+              <p style="color:var(--text-muted); font-size:0.8rem;">Pick 1–10. Added to shared card. Closest to 15 wins (+1).</p>
+            </div>
+            ${this.getInGameAbilityBar()}
+          </div>
+          <div style="background:#0f172a; padding:14px; border-radius:10px; margin: 8px 0;">
+            <div style="display:grid; grid-template-columns: repeat(5, 1fr); gap:6px;">
+              ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => `
+                <button style="font-size:1.1rem; padding:10px 0;" onclick="game.chooseGuess15(${n})">${n}</button>
+              `).join('')}
+            </div>
+          </div>
+        `;
+        document.getElementById('arena-panel').innerHTML = html;
+      }
+
+      chooseGuess15(humanNumber) {
+        const state = this.miniGameState;
+        state.choices[this.players[0].id] = humanNumber;
+
+        this.players.filter(p => !p.isHuman).forEach(bot => {
+          const smartVal = Math.floor(Math.random() * 4) + 7;
+          state.choices[bot.id] = smartVal;
+        });
+
+        const scored = this.players.map(p => {
+          const choice = state.choices[p.id];
+          const total = choice + state.sharedCard;
+          const diff = Math.abs(15 - total);
+          return { id: p.id, name: p.name, choice, total, diff, color: p.color };
+        });
+
+        const minDiff = Math.min(...scored.map(s => s.diff));
+        const maxDiff = Math.max(...scored.map(s => s.diff));
+
+        const winners = scored.filter(s => s.diff === minDiff).map(s => s.id);
+        const losers = scored.filter(s => s.diff === maxDiff).map(s => s.id);
+
+        this.setPendingResults(winners, losers, 1, 1);
+
+        let html = `
+          <div class="arena-header">
+            <h2>🎯 Revealed Results</h2>
+          </div>
+          <div style="background:#0f172a; padding:12px; border-radius:8px; margin: 8px 0; text-align:center;">
+            <div>Shared Hidden Card: <strong style="color:var(--gold); font-size:1.6rem;">${state.sharedCard}</strong></div>
+          </div>
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:8px; margin-bottom:12px;">
+            ${scored.map(s => `
+              <div style="background:#0f172a; padding:8px; border-radius:6px; border:2px solid ${winners.includes(s.id) ? 'var(--green)' : losers.includes(s.id) ? 'var(--red)' : '#334155'}; font-size:0.85rem;">
+                <div style="font-weight:bold; color:${s.color};">${s.name}</div>
+                <div>Pick: ${s.choice} (Sum: <strong>${s.total}</strong>)</div>
+                <div>Diff: <strong>${s.diff}</strong></div>
+                <div style="font-size:0.75rem; margin-top:2px;">
+                  ${winners.includes(s.id) ? '🏆 WINNER (+1)' : losers.includes(s.id) ? '❌ LOSER (-1)' : 'Stays'}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+          <button class="success" style="width:100%;" onclick="game.applyPendingResults()">Proceed to Board Updates</button>
+        `;
+        document.getElementById('arena-panel').innerHTML = html;
+      }
+
+      /* ===================================================================
+         MINI-GAME 5: JOKER & TRAP (PLAYING CARDS)
+         =================================================================== */
+      setupJokerTrap() {
+        const n = this.players.length;
+        const standardRanks = ['A', 'K', 'Q', 'J', '10', '9', '8', '7', '6', '5', '4', '3', '2'];
+        const suits = [
+          { s: '♠', isRed: false },
+          { s: '♥', isRed: true },
+          { s: '♦', isRed: true },
+          { s: '♣', isRed: false }
+        ];
+
+        const deckPool = [];
+        suits.forEach(st => {
+          standardRanks.forEach(rk => {
+            deckPool.push({ type: 'NORMAL', rank: rk, suit: st.s, isRed: st.isRed, name: `${rk}${st.s}` });
+          });
+        });
+        deckPool.sort(() => Math.random() - 0.5);
+
+        const mysteryPool = [
+          { type: 'JOKER', rank: 'JK', suit: '★', isRed: false, name: 'Joker' },
+          { type: 'TRAP', rank: '💀', suit: '☠', isRed: true, name: 'The Trap' }
+        ];
+        for (let i = 1; i <= n - 2; i++) {
+          mysteryPool.push(deckPool.pop());
+        }
+        mysteryPool.sort(() => Math.random() - 0.5);
+
+        this.miniGameState = {
+          type: 'mg5',
+          phase: 'PRE_PICK',
+          roundNumber: 1,
+          mysteryPool: mysteryPool,
+          deckPool: deckPool,
+          hands: {},
+          lastDrawnCardName: ''
+        };
+
+        this.renderJokerTrapPrePick();
+      }
+
+      renderJokerTrapPrePick() {
+        const state = this.miniGameState;
+        let html = `
+          <div class="arena-header">
+            <div>
+              <h2>🃏 Joker & Trap</h2>
+              <p style="color:var(--text-muted); font-size:0.8rem;">Step 1: Pick 1 face-down card!</p>
+            </div>
+            ${this.getInGameAbilityBar()}
+          </div>
+
+          <div style="background:#0f172a; padding:14px; border-radius:10px; margin: 8px 0;">
+            <div class="cards-row">
+              ${state.mysteryPool.map((c, idx) => `
+                <div class="mystery-card" style="width:58px; height:84px; font-size:1.3rem;" onclick="game.jokerTrapChooseInitial(${idx})">
+                  🂠
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+        document.getElementById('arena-panel').innerHTML = html;
+      }
+
+      jokerTrapChooseInitial(chosenIdx) {
+        const state = this.miniGameState;
+        const humanCard = state.mysteryPool.splice(chosenIdx, 1)[0];
+        state.hands[this.players[0].id] = [humanCard];
+
+        state.mysteryPool.sort(() => Math.random() - 0.5);
+        this.players.filter(p => !p.isHuman).forEach(bot => {
+          state.hands[bot.id] = [state.mysteryPool.pop()];
+        });
+
+        this.players.forEach(p => {
+          for (let k = 0; k < 3; k++) {
+            state.hands[p.id].push(state.deckPool.pop());
+          }
+          state.hands[p.id].sort(() => Math.random() - 0.5);
+        });
+
+        this.log(`Picks complete! Everyone holds 4 playing cards.`, 'win');
+        state.phase = 'PASSING_ROUNDS';
+        state.roundNumber = 1;
+        this.renderJokerTrapPassingRound();
+      }
+
+      renderJokerTrapPassingRound() {
+        const state = this.miniGameState;
+        const n = this.players.length;
+        const humanId = this.players[0].id;
+        const humanHand = state.hands[humanId];
+
+        const neighbor = this.players[n - 1];
+        const neighborHand = state.hands[neighbor.id];
+
+        let html = `
+          <div class="arena-header">
+            <div>
+              <h2>🃏 Exchange (${state.roundNumber}/3)</h2>
+              <p style="color:var(--text-muted); font-size:0.8rem;">Draw 1 card from <strong>${neighbor.name}</strong>!</p>
+            </div>
+            ${this.getInGameAbilityBar()}
+          </div>
+
+          <div style="background:#0f172a; padding:12px; border-radius:10px; margin: 6px 0;">
+            <h4 style="font-size:0.85rem; margin-bottom:8px;">Draw from <span style="color:${neighbor.color};">${neighbor.name}</span>:</h4>
+            <div class="cards-row">
+              ${neighborHand.map((_, idx) => `
+                <div class="mystery-card" style="width:54px; height:80px; font-size:1.1rem;" onclick="game.jokerTrapExecuteDraw(${idx})">
+                  🂠
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <div style="background:#0f172a; padding:10px; border-radius:8px;">
+            <h4 style="margin-bottom:6px; font-size:0.85rem;">Your Hand (4 Cards):</h4>
+            <div class="cards-row">
+              ${humanHand.map(c => `
+                <div class="deck-playing-card ${c.type === 'JOKER' ? 'joker' : c.type === 'TRAP' ? 'trap' : c.isRed ? 'red' : ''}">
+                  <div>${c.rank}</div>
+                  <div style="font-size:1.4rem; text-align:center;">${c.suit}</div>
+                  <div style="text-align:right;">${c.rank}</div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+        document.getElementById('arena-panel').innerHTML = html;
+      }
+
+      jokerTrapExecuteDraw(humanChosenIdx) {
+        const state = this.miniGameState;
+        const n = this.players.length;
+        const chosenCards = {};
+
+        const neighborOfHuman = this.players[n - 1];
+        chosenCards[this.players[0].id] = {
+          fromId: neighborOfHuman.id,
+          cardIdx: humanChosenIdx,
+          card: state.hands[neighborOfHuman.id][humanChosenIdx]
+        };
+
+        for (let i = 1; i < n; i++) {
+          const taker = this.players[i];
+          const giver = this.players[i - 1];
+          const randomIdx = Math.floor(Math.random() * state.hands[giver.id].length);
+          chosenCards[taker.id] = {
+            fromId: giver.id,
+            cardIdx: randomIdx,
+            card: state.hands[giver.id][randomIdx]
+          };
+        }
+
+        const newHands = {};
+        this.players.forEach(p => newHands[p.id] = [...state.hands[p.id]]);
+
+        this.players.forEach(taker => {
+          const info = chosenCards[taker.id];
+          const giverHand = newHands[info.fromId];
+          const removedCard = giverHand.splice(info.cardIdx, 1)[0];
+          newHands[taker.id].push(removedCard);
+        });
+
+        state.hands = newHands;
+        const receivedCard = chosenCards[this.players[0].id].card;
+        this.log(`Drew [${receivedCard.name}] from ${neighborOfHuman.name}!`, receivedCard.type === 'JOKER' ? 'win' : receivedCard.type === 'TRAP' ? 'loss' : 'normal');
+
+        state.roundNumber++;
+
+        if (state.roundNumber <= 3) {
+          this.renderJokerTrapPassingRound();
+        } else {
+          this.renderJokerTrapFinalResults();
+        }
+      }
+
+      renderJokerTrapFinalResults() {
+        const state = this.miniGameState;
+        let winners = [];
+        let losers = [];
+
+        this.players.forEach(p => {
+          const hand = state.hands[p.id];
+          if (hand.some(c => c.type === 'JOKER')) winners.push(p.id);
+          if (hand.some(c => c.type === 'TRAP')) losers.push(p.id);
+        });
+
+        this.setPendingResults(winners, losers, 1, 1);
+
+        let html = `
+          <div class="arena-header">
+            <h2>🃏 Final Hands Revealed!</h2>
+          </div>
+
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:8px; margin: 10px 0;">
+            ${this.players.map(p => {
+              const hand = state.hands[p.id];
+              const isWin = winners.includes(p.id);
+              const isLose = losers.includes(p.id);
+              return `
+                <div style="background:#0f172a; padding:8px; border-radius:6px; border:2px solid ${isWin ? 'var(--green)' : isLose ? 'var(--red)' : '#334155'}; font-size:0.8rem;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <strong style="color:${p.color};">${p.name}</strong>
+                    <span style="font-weight:bold; color:${isWin ? 'var(--green)' : isLose ? 'var(--red)' : 'var(--text-muted)'}; font-size:0.75rem;">
+                      ${isWin ? '🏆 WIN (+1)' : isLose ? '❌ LOSE (-1)' : 'Stays'}
+                    </span>
+                  </div>
+                  <div class="cards-row" style="gap:4px;">
+                    ${hand.map(c => `
+                      <div class="deck-playing-card ${c.type === 'JOKER' ? 'joker' : c.type === 'TRAP' ? 'trap' : c.isRed ? 'red' : ''}" style="width:46px; height:68px; font-size:0.65rem; padding:3px;">
+                        <div>${c.rank}</div>
+                        <div style="font-size:1.1rem; text-align:center;">${c.suit}</div>
+                        <div style="text-align:right;">${c.rank}</div>
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+
+          <button class="success" style="width:100%;" onclick="game.applyPendingResults()">Proceed to Board Updates</button>
+        `;
+        document.getElementById('arena-panel').innerHTML = html;
+      }
+
+      /* ===================================================================
+         6. MODALS
+         ===================================================================== */
+      promptLuckyOneChoice(player, c1, c2) {
+        const modal = document.getElementById('modal-container');
+        modal.innerHTML = `
+          <div class="modal-overlay">
+            <div class="modal">
+              <h2>🍀 The Lucky One: Choose 1</h2>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px;">
+                <div class="card-presentation ${c1.tier}" onclick="game.finishLuckyOne('${c1.id}', '${c2.id}')">
+                  ${getSpecialCardArtSVG(c1.id, 46)}
+                  <h4 style="margin:4px 0; font-size:0.95rem;">${c1.name}</h4>
+                  <span class="tag gold">${c1.tier}</span>
+                  <p style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">${c1.desc}</p>
+                  <button class="gold" style="margin-top:8px; width:100%; min-height:36px;">Select</button>
+                </div>
+                <div class="card-presentation ${c2.tier}" onclick="game.finishLuckyOne('${c2.id}', '${c1.id}')">
+                  ${getSpecialCardArtSVG(c2.id, 46)}
+                  <h4 style="margin:4px 0; font-size:0.95rem;">${c2.name}</h4>
+                  <span class="tag gold">${c2.tier}</span>
+                  <p style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">${c2.desc}</p>
+                  <button class="gold" style="margin-top:8px; width:100%; min-height:36px;">Select</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      finishLuckyOne(chosenId, discardedId) {
+        document.getElementById('modal-container').innerHTML = '';
+        const chosen = CARD_TEMPLATES.find(c => c.id === chosenId);
+        const discarded = CARD_TEMPLATES.find(c => c.id === discardedId);
+        this.returnCardToBottom(discarded);
+        this.giveCardToPlayer(this.players[0], chosen);
+      }
+
+      promptMagicianChoice(player, card) {
+        const modal = document.getElementById('modal-container');
+        modal.innerHTML = `
+          <div class="modal-overlay">
+            <div class="modal" style="text-align:center;">
+              <h2>🎩 Magician Swap</h2>
+              <div class="card-presentation ${card.tier}">
+                ${getSpecialCardArtSVG(card.id, 55)}
+                <h3>${card.name}</h3>
+                <span class="tag gold">${card.tier}</span>
+                <p style="font-size:0.8rem; color:var(--text-muted); margin-top:4px;">${card.desc}</p>
+              </div>
+              <div style="display:flex; gap:8px;">
+                <button class="success" style="flex:1;" onclick="game.finishMagician(false, '${card.id}')">Keep Card</button>
+                <button class="gold" style="flex:1;" onclick="game.finishMagician(true, '${card.id}')">Swap Random</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      finishMagician(replace, originalId) {
+        document.getElementById('modal-container').innerHTML = '';
+        const original = CARD_TEMPLATES.find(c => c.id === originalId);
+        if (replace) {
+          this.returnCardToBottom(original);
+          const replaced = this.drawCardFromDeck();
+          this.log(`Swapped ${original.name} for ${replaced.name}!`, 'effect');
+          this.giveCardToPlayer(this.players[0], replaced);
+        } else {
+          this.giveCardToPlayer(this.players[0], original);
+        }
+      }
+
+      promptTargetPlayer(player, callback) {
+        const others = this.players.filter(p => p.id !== player.id);
+        const modal = document.getElementById('modal-container');
+        modal.innerHTML = `
+          <div class="modal-overlay">
+            <div class="modal">
+              <h2>🎯 Choose Target Player</h2>
+              <div style="display:flex; flex-direction:column; gap:6px; margin: 12px 0;">
+                ${others.map(o => `
+                  <button style="padding:8px; text-align:left; display:flex; align-items:center; gap:8px; justify-content:flex-start;" onclick="game.executeTargetCallback(${o.id})">
+                    ${getCharacterAvatarSVG(o.char.id, 24)}
+                    <div>
+                      <strong style="color:${o.color}">${o.name}</strong> (${o.char.name}) — Space ${o.pos}/${this.maxPos}
+                    </div>
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        `;
+        this.pendingTargetCallback = callback;
+      }
+
+      executeTargetCallback(targetId) {
+        document.getElementById('modal-container').innerHTML = '';
+        if (this.pendingTargetCallback) {
+          this.pendingTargetCallback(targetId);
+          this.pendingTargetCallback = null;
+        }
+      }
+
+      showWinnerModal(winner) {
+        const modal = document.getElementById('modal-container');
+        modal.innerHTML = `
+          <div class="modal-overlay">
+            <div class="modal" style="text-align:center;">
+              <h1 style="color:var(--gold); font-size:2.2rem; margin-bottom:4px;">🏆 VICTORY! 🏆</h1>
+              <div style="margin: 8px auto;">${getCharacterAvatarSVG(winner.char.id, 56)}</div>
+              <h2 style="color:${winner.color};">${winner.name} Reached Space ${this.maxPos}!</h2>
+              <p style="margin:6px 0; color:var(--text-muted); font-size:0.85rem;">Character: ${winner.char.name}</p>
+              <div style="background:#0f172a; padding:10px; border-radius:8px; margin:12px 0; text-align:left; font-size:0.8rem;">
+                <strong>Standings:</strong>
+                <ol style="margin-left:18px; margin-top:4px;">
+                  ${[...this.players].sort((a,b) => b.pos - a.pos).map(p => `
+                    <li>${p.name} — ${p.pos}/${this.maxPos} (${p.char.name})</li>
+                  `).join('')}
+                </ol>
+              </div>
+              <button class="gold" style="width:100%;" onclick="game.resetPrompt()">Play Again</button>
+            </div>
+          </div>
+        `;
+      }
+
+      resetPrompt() {
+        localStorage.removeItem('board_game_ai_save');
+        this.pendingResults = null;
+        this.resolvingRound = false;
+        this.miniGameState = null;
+        document.getElementById('arena-panel').innerHTML = '';
+
+        const modal = document.getElementById('modal-container');
+        modal.innerHTML = `
+          <div class="modal-overlay">
+            <div class="modal" style="text-align:center;">
+              <h2 style="font-size:1.6rem; margin-bottom:4px;">🎲 Start New Game</h2>
+              <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:14px;">Select player count and board length:</p>
+
+              <div style="text-align:left; margin-bottom:12px;">
+                <label style="font-size:0.8rem; font-weight:700; color:#cbd5e1;">TOTAL PLAYERS</label>
+                <div class="segmented-control">
+                  <button type="button" id="btn-p6" class="segmented-btn active" onclick="game.setSetupPlayerCount(6)">6 Players</button>
+                  <button type="button" id="btn-p8" class="segmented-btn" onclick="game.setSetupPlayerCount(8)">8 Players</button>
+                </div>
+              </div>
+
+              <div style="text-align:left; margin-bottom:18px;">
+                <label style="font-size:0.8rem; font-weight:700; color:#cbd5e1;">BOARD LENGTH</label>
+                <div class="segmented-control">
+                  <button type="button" id="btn-b10" class="segmented-btn" onclick="game.setSetupBoardLength(10)">10 (Cards: 4, 7)</button>
+                  <button type="button" id="btn-b15" class="segmented-btn active" onclick="game.setSetupBoardLength(15)">15 (Cards: 5, 10)</button>
+                  <button type="button" id="btn-b20" class="segmented-btn" onclick="game.setSetupBoardLength(20)">20 (Cards: 5, 10, 15)</button>
+                </div>
+              </div>
+
+              <button class="success" style="width:100%; font-size:1.1rem; padding:12px;" onclick="game.confirmStartNewGame()">
+                🚀 Start Game
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
+      setSetupPlayerCount(cnt) {
+        this.selectedPlayerCount = cnt;
+        document.getElementById('btn-p6').classList.toggle('active', cnt === 6);
+        document.getElementById('btn-p8').classList.toggle('active', cnt === 8);
+      }
+
+      setSetupBoardLength(len) {
+        this.selectedBoardLength = len;
+        document.getElementById('btn-b10').classList.toggle('active', len === 10);
+        document.getElementById('btn-b15').classList.toggle('active', len === 15);
+        document.getElementById('btn-b20').classList.toggle('active', len === 20);
+      }
+
+      confirmStartNewGame() {
+        this.startNewGame(this.selectedPlayerCount, this.selectedBoardLength);
+      }
+
+      /* ===================================================================
+         7. RENDERING
+         ===================================================================== */
+      renderAll() {
+        this.renderBoard();
+        this.renderPlayers();
+        this.renderLogs();
+      }
+
+      renderBoard() {
+        const boardEl = document.getElementById('board-grid');
+        boardEl.innerHTML = '';
+
+        for (let i = 0; i <= this.maxPos; i++) {
+          const tile = document.createElement('div');
+          tile.className = 'tile';
+          if (i === 0) tile.classList.add('start-tile');
+          if (i === this.maxPos) tile.classList.add('goal-tile');
+          if (this.milestones.includes(i)) tile.classList.add('special-milestone');
+
+          const occupants = this.players.filter(p => p.pos === i);
+
+          tile.innerHTML = `
+            <div class="tile-header">
+              <span>#${i}</span>
+              ${this.milestones.includes(i) ? '<span class="tile-badge">⭐ CARD</span>' : i === 0 ? '<span>START</span>' : i === this.maxPos ? '<span>GOAL</span>' : ''}
+            </div>
+            <div class="tile-occupants">
+              ${occupants.map(p => `
+                <div class="avatar-token" style="background:${p.color}" title="${p.name}">
+                  ${p.isHuman ? 'U' : p.name.charAt(4)}
+                </div>
+              `).join('')}
+            </div>
+          `;
+          boardEl.appendChild(tile);
+        }
+      }
+
+      renderPlayers() {
+        const list = document.getElementById('players-list');
+        list.innerHTML = this.players.map(p => `
+          <div class="player-card ${p.isHuman ? 'is-human' : ''}">
+            <div class="player-header">
+              <div class="player-info">
+                <div class="avatar-frame">
+                  ${getCharacterAvatarSVG(p.char.id, 28)}
+                </div>
+                <div>
+                  <strong style="color:${p.color}; font-size:0.9rem;">${p.name}</strong>
+                  <div style="font-size:0.7rem; color:#cbd5e1;">${p.char.name}</div>
+                </div>
+              </div>
+              <span style="font-weight:800; font-size:1.05rem; color:var(--gold);">${p.pos}/${this.maxPos}</span>
+            </div>
+            <div style="font-size:0.7rem; color:var(--text-muted); line-height:1.3;">
+              ${p.char.desc}
+            </div>
+            <div class="status-tags">
+              <span class="tag ${p.charUsed ? '' : 'purple'}">${p.charUsed ? 'Used' : 'Ability Ready'}</span>
+              ${p.hasShield ? '<span class="tag green">🛡️ Shield</span>' : ''}
+              ${p.hasComeback ? '<span class="tag green">Comeback</span>' : ''}
+              ${p.doubleRewardActive ? '<span class="tag gold">2x Win</span>' : ''}
+              ${p.hasExtraChance ? '<span class="tag gold">⭐ Extra Chance</span>' : ''}
+            </div>
+          </div>
+        `).join('');
+      }
+
+      renderLogs() {
+        const logContent = document.getElementById('log-content');
+        logContent.innerHTML = this.logs.map(l => `
+          <div class="log-entry ${l.type}">
+            <span style="color:var(--text-muted); font-size:0.65rem;">[${l.time}]</span> ${l.msg}
+          </div>
+        `).join('');
+      }
+
+      openStrategistSelector() {
+        const modal = document.getElementById('modal-container');
+        modal.innerHTML = `
+          <div class="modal-overlay">
+            <div class="modal">
+              <h2>🧠 Choose Next Mini-Game</h2>
+              <div style="display:flex; flex-direction:column; gap:6px; margin: 10px 0;">
+                ${MINI_GAMES.map(mg => `
+                  <button style="padding:10px; text-align:left; justify-content:flex-start;" onclick="game.selectStrategistGame('${mg.id}')">
+                    ${mg.name}
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      selectStrategistGame(mgId) {
+        document.getElementById('modal-container').innerHTML = '';
+        const human = this.players[0];
+        human.charUsed = true;
+        this.strategistChoice = MINI_GAMES.find(g => g.id === mgId);
+        this.log(`You chose ${this.strategistChoice.name} for Round ${this.round}!`, 'win');
+        this.showRoundTransitionScreen();
+      }
+
+      activateHumanThief() {
+        const human = this.players[0];
+        this.promptTargetPlayer(human, (targetId) => {
+          human.charUsed = true;
+          const target = this.players.find(p => p.id === targetId);
+          target.reservedTheftBy = human.id;
+          this.log(`You secretly placed a theft trap on ${target.name}!`, 'win');
+          this.showRoundTransitionScreen();
+        });
+      }
+
+      activateHumanGambler() {
+        const human = this.players[0];
+        human.charUsed = true;
+        human.activeCharOption = 'WAGER';
+        this.log("You placed a wager! Win = +2 spaces, Lose = -2 spaces.", "gold");
+        this.renderPlayers();
+        const abilityBtn = document.querySelector('.arena-header button.gold');
+        if (abilityBtn) abilityBtn.remove();
+      }
+
+      activateHumanCharmer() {
+        const human = this.players[0];
+        this.promptTargetPlayer(human, (targetId) => {
+          human.charUsed = true;
+          human.activeCharOption = targetId;
+          const target = this.players.find(p => p.id === targetId);
+          this.log(`You secretly charmed ${target.name}. If they win and you don't, you gain +1 space!`, 'win');
+          this.renderPlayers();
+          const abilityBtn = document.querySelector('.arena-header button.secondary');
+          if (abilityBtn) abilityBtn.remove();
+        });
+      }
+    }
+
+    /* Engine initialization triggered only after entering password */
+    let game;
+    function initGameEngine() {
+      if (!game) {
+        game = new BoardGameEngine();
+        window.game = game;
+
+        if (!game.loadState()) {
+          game.resetPrompt();
+        } else {
+          game.renderAll();
+          if (game.status === 'MINIGAME' && game.currentMiniGame) {
+            game.launchMiniGame(game.currentMiniGame.id);
+          } else {
+            game.showRoundTransitionScreen();
+          }
+        }
+      }
+    }
+  </script>
+</body>
+</html>
