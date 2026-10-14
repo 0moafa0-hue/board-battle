@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -19,11 +20,18 @@
       --text: #f8fafc;
       --text-muted: #94a3b8;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+      -webkit-tap-highlight-color: transparent; 
+    }
     body {
       background-color: var(--bg);
       color: var(--text);
       min-height: 100vh;
+      min-height: 100dvh;
       display: flex;
       flex-direction: column;
       overflow-x: hidden;
@@ -33,7 +41,7 @@
       padding-right: env(safe-area-inset-right);
     }
 
-    /* Password Screen Styles */
+    /* Password Screen */
     #password-gate {
       position: fixed;
       inset: 0;
@@ -69,7 +77,7 @@
     }
     .gate-input:focus { border-color: var(--accent); }
 
-    /* Main Game App (Hidden until unlocked) */
+    /* Main Game App */
     #game-app { display: none; }
 
     header {
@@ -101,6 +109,8 @@
       justify-content: center;
       gap: 6px;
       user-select: none;
+      touch-action: manipulation;
+      -webkit-appearance: none;
     }
     button:active { transform: scale(0.97); }
     button:disabled { opacity: 0.45; cursor: not-allowed; }
@@ -137,17 +147,18 @@
       gap: 8px;
     }
     @media (max-width: 500px) {
-      .board-grid { grid-template-columns: repeat(5, 1fr); gap: 6px; }
+      .board-grid { grid-template-columns: repeat(5, 1fr); gap: 4px; }
     }
     .tile {
       background: #0f172a;
       border: 2px solid var(--border);
       border-radius: 8px;
-      min-height: 70px;
-      padding: 6px;
+      min-height: 60px;
+      padding: 4px 6px;
       display: flex;
       flex-direction: column;
       position: relative;
+      min-width: 0;
     }
     .tile.special-milestone {
       border-color: var(--gold);
@@ -175,13 +186,13 @@
     }
     .tile-occupants { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 4px; }
     .avatar-token {
-      width: 22px;
-      height: 22px;
+      width: 20px;
+      height: 20px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.65rem;
+      font-size: 0.6rem;
       font-weight: bold;
       color: white;
       border: 1.5px solid white;
@@ -243,6 +254,7 @@
       gap: 14px;
       min-height: 420px;
       scroll-margin-top: 60px;
+      -webkit-overflow-scrolling: touch;
     }
     .arena-header {
       border-bottom: 1px solid var(--border);
@@ -270,6 +282,7 @@
       flex-direction: column;
       gap: 6px;
       font-size: 0.8rem;
+      -webkit-overflow-scrolling: touch;
     }
     .log-entry {
       background: #0f172a;
@@ -300,8 +313,9 @@
       width: 100%;
       padding: 20px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.7);
-      max-height: 92vh;
+      max-height: 90vh;
       overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
 
     .cards-row { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
@@ -318,6 +332,7 @@
       font-weight: bold;
       font-size: 0.75rem;
       border: 1px solid #cbd5e1;
+      user-select: none;
     }
     .deck-playing-card.red { color: #dc2626; }
     .deck-playing-card.joker {
@@ -348,6 +363,7 @@
       font-size: 1.1rem;
       cursor: pointer;
       border: 1.5px solid var(--border);
+      touch-action: manipulation;
     }
     .mystery-card.selected { border-color: var(--gold); transform: scale(1.04); background: #475569; }
     .mystery-card.revealed { background: #0f172a; border-color: var(--accent); }
@@ -384,13 +400,14 @@
       color: var(--text-muted);
       border: none;
       min-height: 40px;
+      touch-action: manipulation;
     }
     .segmented-btn.active { background: var(--accent); color: white; font-weight: 700; }
   </style>
 </head>
 <body>
 
-  <!-- ================= PASSWORD LOCK SCREEN ================= -->
+  <!-- ================= PASSWORD SCREEN ================= -->
   <div id="password-gate">
     <div class="gate-box">
       <div style="font-size: 3rem; margin-bottom: 8px;">🔒</div>
@@ -436,15 +453,15 @@
           <div class="board-grid" id="board-grid"></div>
         </div>
 
-        <!-- Active Mini-Game Arena -->
+        <!-- Active Arena -->
         <div class="arena-panel" id="arena-panel"></div>
 
-        <!-- Players Roster -->
+        <!-- Standings -->
         <h3 style="margin: 14px 0 6px 0; font-size: 0.95rem; color: var(--text-muted);">Player Standings</h3>
         <div class="players-list" id="players-list"></div>
       </div>
 
-      <!-- Live Event Feed -->
+      <!-- Feed -->
       <div class="right-col">
         <div class="log-panel">
           <h3 style="margin-bottom: 8px; font-size: 0.95rem; display: flex; justify-content: space-between; align-items: center;">
@@ -461,7 +478,7 @@
 
   <script>
     /* =====================================================================
-       PASSWORD VALIDATION (192855)
+       PASSWORD CHECK
        ===================================================================== */
     function checkPassword() {
       const entered = document.getElementById('pass-input').value.trim();
@@ -477,7 +494,6 @@
       }
     }
 
-    // Auto-unlock if entered earlier in this browser session
     window.addEventListener('DOMContentLoaded', () => {
       if (sessionStorage.getItem('game_auth_key') === 'unlocked') {
         document.getElementById('password-gate').style.display = 'none';
@@ -487,7 +503,7 @@
     });
 
     /* =====================================================================
-       SVG ARTWORK
+       SVG ASSETS
        ===================================================================== */
     function getCharacterAvatarSVG(charId, size = 32) {
       switch (charId) {
@@ -577,7 +593,7 @@
     ];
 
     /* =====================================================================
-       CENTRAL GAME ENGINE
+       GAME ENGINE
        ===================================================================== */
     class BoardGameEngine {
       constructor() {
@@ -737,6 +753,7 @@
         }
 
         this.log(`Game started! ${totalPlayers} players, ${boardLength} blocks to win.`, 'win');
+        this.saveState();
         this.renderAll();
         this.triggerBotPreRoundDecisions();
         this.startMiniGameRound();
@@ -792,6 +809,7 @@
 
         if (p.pos >= this.maxPos) {
           this.status = 'GAME_OVER';
+          this.saveState();
           this.renderAll();
           this.showWinnerModal(p);
           return;
@@ -799,6 +817,7 @@
 
         this.renderBoard();
         this.renderPlayers();
+        this.saveState();
       }
 
       showGlobalMilestoneAlert(stage) {
@@ -827,11 +846,11 @@
           const thief = this.players.find(x => x.id === player.reservedTheftBy);
           player.reservedTheftBy = null;
           const stolenCard = this.drawCardFromDeck();
-          this.log(`🕵️ SURPRISE CARD THEFT! ${player.name}'s milestone card was stolen by ${thief.name}!`, 'loss');
-          if (player.isHuman) {
+          this.log(`🕵️ SURPRISE CARD THEFT! ${player.name}'s milestone card was stolen by ${thief ? thief.name : 'an opponent'}!`, 'loss');
+          if (player.isHuman && thief) {
             this.showAmbushTheftModal(thief, stolenCard);
           }
-          this.giveCardToPlayer(thief, stolenCard);
+          if (thief) this.giveCardToPlayer(thief, stolenCard);
           return;
         }
 
@@ -892,10 +911,6 @@
       giveCardToPlayer(player, card) {
         this.log(`${player.name} received: [${card.name}] (${card.tier})!`, 'effect');
 
-        if (player.isHuman) {
-          this.showCardDrawnPresentationModal(card);
-        }
-
         if (card.id === 'card_legendary') {
           this.movePlayer(player.id, 3, 'Legendary Advance');
         } else if (card.id === 'card_step') {
@@ -918,20 +933,28 @@
           if (player.isHuman) {
             this.promptTargetPlayer(player, (targetId) => {
               const target = this.players.find(p => p.id === targetId);
-              this.applyNegativeEffect(target, 2, `Targeted Setback from ${player.name}`);
+              if (target) this.applyNegativeEffect(target, 2, `Targeted Setback from ${player.name}`);
             });
+            player.cards.push(card);
+            this.renderPlayers();
+            return;
           } else {
             const others = this.players.filter(p => p.id !== player.id);
             others.sort((a,b) => b.pos - a.pos);
-            this.applyNegativeEffect(others[0], 2, `Targeted Setback from ${player.name}`);
+            if (others.length > 0) this.applyNegativeEffect(others[0], 2, `Targeted Setback from ${player.name}`);
           }
         } else if (card.id === 'card_theft') {
           if (player.isHuman) {
             this.promptTargetPlayer(player, (targetId) => {
               const target = this.players.find(p => p.id === targetId);
-              target.reservedTheftBy = player.id;
-              this.log(`You secretly placed a theft trap on ${target.name}!`, 'effect');
+              if (target) {
+                target.reservedTheftBy = player.id;
+                this.log(`You secretly placed a theft trap on ${target.name}!`, 'effect');
+              }
             });
+            player.cards.push(card);
+            this.renderPlayers();
+            return;
           } else {
             const others = this.players.filter(p => p.id !== player.id);
             if (others.length > 0) {
@@ -940,6 +963,10 @@
               this.log(`A secret card theft trap was laid by an opponent!`, 'effect');
             }
           }
+        }
+
+        if (player.isHuman) {
+          this.showCardDrawnPresentationModal(card);
         }
 
         player.cards.push(card);
@@ -967,6 +994,7 @@
       }
 
       applyNegativeEffect(target, setbackSteps, sourceDescription) {
+        if (!target) return;
         if (target.char.id === 'c2') {
           if (Math.random() < 0.5) {
             this.log(`🃏 The Trickster's passive tripped up the attack! ${sourceDescription} FAILED against ${target.name}!`, 'win');
@@ -991,6 +1019,122 @@
         this.movePlayer(target.id, -setbackSteps, sourceDescription);
       }
 
+      /* ===================================================================
+         CRUCIAL: MINI-GAME ROUND RESULTS & RESOLUTION ENGINE
+         =================================================================== */
+      setPendingResults(winners, losers, winReward = 1, losePenalty = 1) {
+        this.pendingResults = {
+          winners: Array.from(new Set(winners)),
+          losers: Array.from(new Set(losers)),
+          winReward: winReward,
+          losePenalty: losePenalty
+        };
+        this.saveState();
+      }
+
+      applyPendingResults() {
+        if (!this.pendingResults) {
+          this.showRoundTransitionScreen();
+          return;
+        }
+
+        const { winners, losers, winReward, losePenalty } = this.pendingResults;
+        this.pendingResults = null;
+
+        // 1. Process Winners
+        winners.forEach(wId => {
+          const p = this.players.find(x => x.id === wId);
+          if (!p) return;
+
+          let reward = winReward;
+
+          // c4 (The Runner): First mini-game win advances 2 spaces instead of 1
+          if (p.char.id === 'c4' && !p.hasWonMiniGame) {
+            reward = Math.max(reward, 2);
+            this.log(`⚡ ${p.name} (The Runner) first win bonus applied!`, 'win');
+          }
+
+          // Double Reward Card
+          if (p.doubleRewardActive) {
+            reward *= 2;
+            p.doubleRewardActive = false;
+            this.log(`✨ ${p.name} consumed Double Reward (+${reward} spaces)!`, 'win');
+          }
+
+          // Gambler active wager
+          if (p.char.id === 'c8' && p.activeCharOption === 'WAGER') {
+            reward += 2;
+            p.activeCharOption = null;
+            this.log(`🎲 ${p.name} won Gambler Wager (+2 extra spaces)!`, 'win');
+          }
+
+          // Unlucky Win Card: Next win moves backward 1 space instead
+          if (p.unluckyWinActive) {
+            p.unluckyWinActive = false;
+            this.log(`💥 ${p.name}'s victory was corrupted by Unlucky Wins (-1 space)!`, 'loss');
+            this.applyNegativeEffect(p, 1, 'Unlucky Wins Curse');
+          } else {
+            this.movePlayer(p.id, reward, 'Mini-Game Victory');
+          }
+
+          p.hasWonMiniGame = true;
+        });
+
+        // 2. Charmer (c10) link bonus
+        this.players.forEach(p => {
+          if (p.char.id === 'c10' && p.activeCharOption !== null) {
+            const charmedId = p.activeCharOption;
+            p.activeCharOption = null;
+            if (winners.includes(charmedId) && !winners.includes(p.id)) {
+              this.log(`💖 ${p.name} (The Charmer) gained +1 space via resonance with charmed winner!`, 'win');
+              this.movePlayer(p.id, 1, 'Charmer Resonance');
+            }
+          }
+        });
+
+        // 3. Process Losers
+        losers.forEach(lId => {
+          // If a player somehow qualified for both, winning priority wins
+          if (winners.includes(lId)) return;
+
+          const p = this.players.find(x => x.id === lId);
+          if (!p) return;
+
+          // Comeback Card: First time losing, advance +1 space with winners
+          if (p.hasComeback) {
+            p.hasComeback = false;
+            this.log(`🔄 ${p.name} activated Comeback card and gains +1 space instead!`, 'win');
+            this.movePlayer(p.id, 1, 'Comeback Card');
+            return;
+          }
+
+          // The Persistent One (c7): First time losing with move penalty, stay in place
+          if (p.char.id === 'c7' && !p.charUsed) {
+            p.charUsed = true;
+            this.log(`🛡️ ${p.name} (The Persistent One) stood firm and resisted the move penalty!`, 'win');
+            return;
+          }
+
+          let penalty = losePenalty;
+          if (p.char.id === 'c8' && p.activeCharOption === 'WAGER') {
+            penalty = 2;
+            p.activeCharOption = null;
+            this.log(`🎲 ${p.name} lost Gambler Wager (-2 spaces)!`, 'loss');
+          }
+
+          this.applyNegativeEffect(p, penalty, 'Mini-Game Defeat');
+        });
+
+        if (this.status === 'GAME_OVER') {
+          this.saveState();
+          return;
+        }
+
+        this.round++;
+        this.saveState();
+        this.showRoundTransitionScreen();
+      }
+
       showRoundTransitionScreen() {
         if (this.status === 'GAME_OVER') return;
         this.status = 'PRE_ROUND';
@@ -1002,7 +1146,7 @@
 
         const human = this.players[0];
         let abilitiesHtml = '';
-        if (!human.charUsed) {
+        if (human && !human.charUsed) {
           if (human.char.id === 'c5') {
             abilitiesHtml += `<button class="gold" onclick="game.openStrategistSelector()">🧠 Strategist: Choose Mini-Game</button>`;
           } else if (human.char.id === 'c6') {
@@ -1019,9 +1163,9 @@
             <div style="font-size:3rem; margin-bottom:8px;">🎲</div>
             <h2 style="color:var(--gold); font-size:1.6rem; margin-bottom:6px;">Ready for Round ${this.round}!</h2>
             <p style="color:var(--text-muted); max-width:440px; margin-bottom:14px; font-size:0.9rem;">
-              Board positions updated (${this.maxPos} blocks total). Check standings and launch the next mini-game!
+              Standings and board positions have been updated (${this.maxPos} blocks total).
             </p>
-            ${this.strategistChoice ? `<div style="color:var(--gold); font-weight:bold; margin-bottom:10px;">(Strategist Chosen: ${this.strategistChoice.name})</div>` : ''}
+            ${this.strategistChoice ? `<div style="color:var(--gold); font-weight:bold; margin-bottom:10px;">(Strategist Selected: ${this.strategistChoice.name})</div>` : ''}
             ${abilitiesHtml ? `<div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-bottom:16px;">${abilitiesHtml}</div>` : ''}
             <button class="success" style="font-size:1.15rem; padding:12px 30px; width:100%; max-width:320px;" onclick="game.startMiniGameRound()">
               ▶ Play Round ${this.round} Mini-Game
@@ -1046,8 +1190,9 @@
         this.launchMiniGame(selectedGame.id);
 
         setTimeout(() => {
-          document.getElementById('arena-panel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }, 100);
+          const panel = document.getElementById('arena-panel');
+          if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 120);
       }
 
       launchMiniGame(mgId) {
@@ -1383,7 +1528,7 @@
                 </div>
               `).join('')}
             </div>
-            <p style="font-size:0.85rem;">Scored: <strong>${roundScorers.join(', ') || 'None'}</strong></p>
+            <p style="font-size:0.85rem;">Scored this round: <strong>${roundScorers.join(', ') || 'None'}</strong></p>
           </div>
           <div style="margin-top:12px;">
             ${state.currentRoundIdx < 4 ? `
@@ -1828,7 +1973,7 @@
           const info = chosenCards[taker.id];
           const giverHand = newHands[info.fromId];
           const removedCard = giverHand.splice(info.cardIdx, 1)[0];
-          newHands[taker.id].push(removedCard);
+          if (removedCard) newHands[taker.id].push(removedCard);
         });
 
         state.hands = newHands;
@@ -1895,7 +2040,7 @@
       }
 
       /* ===================================================================
-         6. MODALS
+         MODALS & INTERFACES
          ===================================================================== */
       promptLuckyOneChoice(player, c1, c2) {
         const modal = document.getElementById('modal-container');
@@ -1928,8 +2073,8 @@
         document.getElementById('modal-container').innerHTML = '';
         const chosen = CARD_TEMPLATES.find(c => c.id === chosenId);
         const discarded = CARD_TEMPLATES.find(c => c.id === discardedId);
-        this.returnCardToBottom(discarded);
-        this.giveCardToPlayer(this.players[0], chosen);
+        if (discarded) this.returnCardToBottom(discarded);
+        if (chosen) this.giveCardToPlayer(this.players[0], chosen);
       }
 
       promptMagicianChoice(player, card) {
@@ -1956,12 +2101,12 @@
       finishMagician(replace, originalId) {
         document.getElementById('modal-container').innerHTML = '';
         const original = CARD_TEMPLATES.find(c => c.id === originalId);
-        if (replace) {
+        if (replace && original) {
           this.returnCardToBottom(original);
           const replaced = this.drawCardFromDeck();
           this.log(`Swapped ${original.name} for ${replaced.name}!`, 'effect');
           this.giveCardToPlayer(this.players[0], replaced);
-        } else {
+        } else if (original) {
           this.giveCardToPlayer(this.players[0], original);
         }
       }
@@ -2077,7 +2222,7 @@
       }
 
       /* ===================================================================
-         7. RENDERING
+         RENDERING
          ===================================================================== */
       renderAll() {
         this.renderBoard();
@@ -2186,8 +2331,10 @@
         this.promptTargetPlayer(human, (targetId) => {
           human.charUsed = true;
           const target = this.players.find(p => p.id === targetId);
-          target.reservedTheftBy = human.id;
-          this.log(`You secretly placed a theft trap on ${target.name}!`, 'win');
+          if (target) {
+            target.reservedTheftBy = human.id;
+            this.log(`You secretly placed a theft trap on ${target.name}!`, 'win');
+          }
           this.showRoundTransitionScreen();
         });
       }
@@ -2208,7 +2355,9 @@
           human.charUsed = true;
           human.activeCharOption = targetId;
           const target = this.players.find(p => p.id === targetId);
-          this.log(`You secretly charmed ${target.name}. If they win and you don't, you gain +1 space!`, 'win');
+          if (target) {
+            this.log(`You secretly charmed ${target.name}. If they win and you don't, you gain +1 space!`, 'win');
+          }
           this.renderPlayers();
           const abilityBtn = document.querySelector('.arena-header button.secondary');
           if (abilityBtn) abilityBtn.remove();
@@ -2216,7 +2365,7 @@
       }
     }
 
-    /* Engine initialization triggered only after entering password */
+    /* ENGINE INITIALIZATION */
     let game;
     function initGameEngine() {
       if (!game) {
@@ -2238,3 +2387,4 @@
   </script>
 </body>
 </html>
+```
