@@ -7,13 +7,15 @@
   <title>Board Battle: AI Arena</title>
   <style>
     :root {
-      --bg: #0b1120;
-      --card-bg: #1e293b;
-      --panel-bg: #162032;
-      --border: #334155;
+      --bg: #070b14;
+      --card-bg: #131b2e;
+      --panel-bg: #0f172a;
+      --border: #233554;
+      --border-bright: #3b82f6;
       --accent: #6366f1;
       --accent-hover: #4f46e5;
       --gold: #f59e0b;
+      --gold-glow: rgba(245, 158, 11, 0.4);
       --red: #ef4444;
       --green: #10b981;
       --purple: #a855f7;
@@ -28,7 +30,7 @@
       -webkit-tap-highlight-color: transparent; 
     }
     body {
-      background-color: var(--bg);
+      background: radial-gradient(circle at 50% 0%, #1e1b4b 0%, var(--bg) 75%);
       color: var(--text);
       min-height: 100vh;
       min-height: 100dvh;
@@ -45,7 +47,7 @@
     #password-gate {
       position: fixed;
       inset: 0;
-      background: #090d16;
+      background: #060911;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -53,25 +55,25 @@
       padding: 16px;
     }
     .gate-box {
-      background: #1e293b;
+      background: #111827;
       border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 28px 20px;
+      border-radius: 18px;
+      padding: 30px 22px;
       max-width: 360px;
       width: 100%;
       text-align: center;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+      box-shadow: 0 14px 40px rgba(0,0,0,0.85);
     }
     .gate-input {
       width: 100%;
-      background: #0f172a;
+      background: #090e17;
       border: 2px solid var(--border);
-      border-radius: 10px;
+      border-radius: 12px;
       padding: 14px;
       color: white;
       font-size: 1.3rem;
       text-align: center;
-      letter-spacing: 4px;
+      letter-spacing: 5px;
       margin: 16px 0 10px 0;
       outline: none;
     }
@@ -81,7 +83,8 @@
     #game-app { display: none; }
 
     header {
-      background: rgba(15, 23, 42, 0.96);
+      background: rgba(11, 17, 32, 0.94);
+      backdrop-filter: blur(10px);
       border-bottom: 1px solid var(--border);
       padding: 10px 16px;
       display: flex;
@@ -91,7 +94,7 @@
       top: 0;
       z-index: 40;
     }
-    .header-title { font-size: 1.1rem; font-weight: 800; color: #a5b4fc; display: flex; align-items: center; gap: 6px; }
+    .header-title { font-size: 1.15rem; font-weight: 800; color: #cbd5e1; display: flex; align-items: center; gap: 6px; }
     .header-actions { display: flex; gap: 8px; align-items: center; }
 
     button {
@@ -100,8 +103,8 @@
       border: none;
       min-height: 44px;
       padding: 8px 16px;
-      border-radius: 8px;
-      font-weight: 600;
+      border-radius: 10px;
+      font-weight: 700;
       font-size: 0.95rem;
       cursor: pointer;
       display: inline-flex;
@@ -111,13 +114,15 @@
       user-select: none;
       touch-action: manipulation;
       -webkit-appearance: none;
+      transition: all 0.15s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
     }
-    button:active { transform: scale(0.97); }
-    button:disabled { opacity: 0.45; cursor: not-allowed; }
-    button.secondary { background: #334155; }
+    button:active { transform: scale(0.96); }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    button.secondary { background: #1e293b; color: #cbd5e1; border: 1px solid #334155; }
     button.danger { background: var(--red); }
     button.success { background: var(--green); }
-    button.gold { background: var(--gold); color: #000; font-weight: 700; }
+    button.gold { background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; font-weight: 800; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35); }
 
     .main-layout {
       display: grid;
@@ -134,43 +139,65 @@
       .right-col { order: 3; }
     }
 
+    /* ================= LIVE VIBRANT BOARD ================= */
     .board-container {
-      background: var(--card-bg);
-      border-radius: 12px;
-      padding: 12px;
-      border: 1px solid var(--border);
-      margin-bottom: 12px;
+      background: linear-gradient(145deg, #101726, #090e17);
+      border-radius: 16px;
+      padding: 14px;
+      border: 1.5px solid var(--border);
+      box-shadow: inset 0 2px 10px rgba(255,255,255,0.03), 0 10px 30px rgba(0,0,0,0.6);
+      margin-bottom: 14px;
+      position: relative;
     }
     .board-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(68px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(78px, 1fr));
       gap: 8px;
     }
-    @media (max-width: 500px) {
-      .board-grid { grid-template-columns: repeat(5, 1fr); gap: 4px; }
+    @media (max-width: 540px) {
+      .board-grid { grid-template-columns: repeat(5, 1fr); gap: 6px; }
     }
     .tile {
-      background: #0f172a;
-      border: 2px solid var(--border);
-      border-radius: 8px;
-      min-height: 60px;
-      padding: 4px 6px;
+      background: #0f1626;
+      border: 2px solid #1e2b45;
+      border-radius: 12px;
+      min-height: 72px;
+      padding: 5px;
       display: flex;
       flex-direction: column;
       position: relative;
       min-width: 0;
+      transition: transform 0.2s, border-color 0.2s;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+    .tile:hover {
+      border-color: #3b82f6;
+      transform: translateY(-2px);
     }
     .tile.special-milestone {
       border-color: var(--gold);
-      box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
-      background: #1c1917;
+      box-shadow: 0 0 16px rgba(245, 158, 11, 0.25), inset 0 0 10px rgba(245, 158, 11, 0.1);
+      background: linear-gradient(160deg, #1f1a14, #120e09);
+      animation: pulse-milestone 3s infinite ease-in-out;
     }
-    .tile.start-tile { border-color: #3b82f6; }
-    .tile.goal-tile { border-color: var(--green); background: #064e3b33; }
+    @keyframes pulse-milestone {
+      0%, 100% { box-shadow: 0 0 12px rgba(245, 158, 11, 0.2); }
+      50% { box-shadow: 0 0 22px rgba(245, 158, 11, 0.45); }
+    }
+    .tile.start-tile {
+      border-color: #38bdf8;
+      background: linear-gradient(160deg, #0e2a47, #081626);
+      box-shadow: 0 0 14px rgba(56, 189, 248, 0.3);
+    }
+    .tile.goal-tile {
+      border-color: var(--green);
+      background: linear-gradient(160deg, #063d2e, #031c15);
+      box-shadow: 0 0 16px rgba(16, 185, 129, 0.35);
+    }
     .tile-header {
-      font-size: 0.7rem;
-      font-weight: 700;
-      color: var(--text-muted);
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: #64748b;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -178,24 +205,64 @@
     .tile-badge {
       font-size: 0.55rem;
       padding: 1px 4px;
-      border-radius: 3px;
+      border-radius: 4px;
       background: var(--gold);
       color: #000;
-      font-weight: 800;
+      font-weight: 900;
       white-space: nowrap;
+      letter-spacing: 0.5px;
     }
-    .tile-occupants { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 4px; }
+    .tile-occupants { 
+      display: flex; 
+      flex-wrap: wrap; 
+      gap: 4px; 
+      margin-top: auto;
+      padding-top: 4px;
+      justify-content: center;
+    }
+
+    /* ================= DELUXE FIGURINE "ROCKS" ================= */
     .avatar-token {
-      width: 20px;
-      height: 20px;
+      width: 26px;
+      height: 26px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.6rem;
-      font-weight: bold;
-      color: white;
-      border: 1.5px solid white;
+      position: relative;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+      transition: transform 0.15s ease;
+      background: #0f172a;
+      border: 2px solid;
+    }
+    .avatar-token:hover { transform: scale(1.25); z-index: 10; }
+    .avatar-token.is-human-token {
+      border-color: #fde047 !important;
+      box-shadow: 0 0 10px #fde047, 0 0 2px #000;
+      animation: human-glow 2.5s infinite;
+    }
+    @keyframes human-glow {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.12); }
+    }
+    .avatar-token svg {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      display: block;
+    }
+    .token-label-you {
+      position: absolute;
+      top: -7px;
+      font-size: 0.48rem;
+      font-weight: 900;
+      background: #facc15;
+      color: #000;
+      padding: 0 3px;
+      border-radius: 3px;
+      line-height: 1.1;
+      pointer-events: none;
     }
 
     .players-list {
@@ -208,46 +275,51 @@
     .player-card {
       background: var(--card-bg);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 10px;
+      border-radius: 12px;
+      padding: 10px 12px;
       display: flex;
       flex-direction: column;
       gap: 6px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     }
     .player-card.is-human {
       border: 2px solid var(--accent);
-      background: #1c1d38;
-      box-shadow: 0 0 12px rgba(99, 102, 241, 0.15);
+      background: linear-gradient(145deg, #1b2042, #111429);
+      box-shadow: 0 0 14px rgba(99, 102, 241, 0.25);
     }
     .player-header { display: flex; align-items: center; justify-content: space-between; }
-    .player-info { display: flex; align-items: center; gap: 8px; }
+    .player-info { display: flex; align-items: center; gap: 10px; }
     .avatar-frame {
-      width: 38px;
-      height: 38px;
-      border-radius: 8px;
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #0f172a;
-      border: 1.5px solid var(--border);
+      background: #090e17;
+      border: 2px solid var(--border);
       flex-shrink: 0;
+      overflow: hidden;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.4);
     }
     .status-tags { display: flex; flex-wrap: wrap; gap: 4px; }
     .tag {
       font-size: 0.65rem;
-      padding: 2px 6px;
-      border-radius: 4px;
-      background: #334155;
-      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 5px;
+      background: #1e293b;
+      font-weight: 700;
+      border: 1px solid rgba(255,255,255,0.08);
     }
-    .tag.green { background: #065f46; color: #a7f3d0; }
-    .tag.gold { background: #78350f; color: #fde68a; }
-    .tag.purple { background: #581c87; color: #e9d5ff; }
+    .tag.green { background: #064e3b; color: #6ee7b7; border-color: #059669; }
+    .tag.gold { background: #78350f; color: #fde68a; border-color: #b45309; }
+    .tag.purple { background: #4c1d95; color: #e9d5ff; border-color: #7c3aed; }
+    .tag.red { background: #7f1d1d; color: #fca5a5; border-color: #b91c1c; }
 
     .arena-panel {
       background: var(--card-bg);
       border: 2px solid var(--border);
-      border-radius: 12px;
+      border-radius: 16px;
       padding: 16px;
       display: flex;
       flex-direction: column;
@@ -255,6 +327,7 @@
       min-height: 420px;
       scroll-margin-top: 60px;
       -webkit-overflow-scrolling: touch;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
     .arena-header {
       border-bottom: 1px solid var(--border);
@@ -269,11 +342,11 @@
     .log-panel {
       background: var(--panel-bg);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 16px;
       padding: 14px;
       display: flex;
       flex-direction: column;
-      max-height: 500px;
+      max-height: 520px;
     }
     .log-content {
       flex: 1;
@@ -285,9 +358,9 @@
       -webkit-overflow-scrolling: touch;
     }
     .log-entry {
-      background: #0f172a;
-      padding: 6px 8px;
-      border-radius: 6px;
+      background: #090e17;
+      padding: 7px 10px;
+      border-radius: 8px;
       border-left: 3px solid var(--accent);
       line-height: 1.35;
     }
@@ -298,7 +371,8 @@
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.85);
+      background: rgba(4, 7, 13, 0.88);
+      backdrop-filter: blur(8px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -306,33 +380,36 @@
       padding: 12px;
     }
     .modal {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      max-width: 500px;
+      background: #131b2e;
+      border: 1.5px solid var(--border);
+      border-radius: 18px;
+      max-width: 520px;
       width: 100%;
-      padding: 20px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+      padding: 22px;
+      box-shadow: 0 16px 50px rgba(0,0,0,0.85);
       max-height: 90vh;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
     }
 
+    /* Cards Styling */
     .cards-row { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
     .deck-playing-card {
       background: white;
       color: #0f172a;
-      border-radius: 6px;
-      width: 54px;
-      height: 80px;
+      border-radius: 8px;
+      width: 56px;
+      height: 84px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: 4px 5px;
+      padding: 5px 6px;
       font-weight: bold;
       font-size: 0.75rem;
-      border: 1px solid #cbd5e1;
+      border: 1.5px solid #cbd5e1;
       user-select: none;
+      touch-action: manipulation;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
     }
     .deck-playing-card.red { color: #dc2626; }
     .deck-playing-card.joker {
@@ -345,6 +422,21 @@
       border: 2px solid var(--red);
       color: #fca5a5;
     }
+    .deck-playing-card.gold-card {
+      background: linear-gradient(135deg, #fef08a, #f59e0b);
+      border: 2px solid #b45309;
+      color: #78350f;
+    }
+    .deck-playing-card.interactive {
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .deck-playing-card.interactive:active { transform: scale(0.94); }
+    .deck-playing-card.selected-play {
+      border: 3px solid var(--gold);
+      box-shadow: 0 0 14px rgba(245, 158, 11, 0.7);
+      transform: translateY(-8px);
+    }
 
     .grid-pick {
       display: grid;
@@ -353,40 +445,44 @@
       margin: 10px 0;
     }
     .mystery-card {
-      background: #334155;
+      background: #1e293b;
       color: white;
       aspect-ratio: 2/3;
-      border-radius: 6px;
+      border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.1rem;
+      font-size: 1.15rem;
       cursor: pointer;
-      border: 1.5px solid var(--border);
+      border: 1.5px solid #334155;
       touch-action: manipulation;
+      user-select: none;
+      transition: all 0.15s ease;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.3);
     }
-    .mystery-card.selected { border-color: var(--gold); transform: scale(1.04); background: #475569; }
+    .mystery-card:active { transform: scale(0.94); }
+    .mystery-card.selected { border-color: var(--gold); transform: scale(1.05); background: #334155; }
     .mystery-card.revealed { background: #0f172a; border-color: var(--accent); }
 
     .choice-button-grid { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 10px; }
     .card-presentation {
-      background: #0f172a;
+      background: #090e17;
       border: 3px solid;
-      border-radius: 12px;
+      border-radius: 14px;
       padding: 16px;
       text-align: center;
       margin: 12px 0;
     }
-    .card-presentation.Legendary { border-color: var(--gold); }
-    .card-presentation.Rare { border-color: var(--purple); }
-    .card-presentation.Good { border-color: var(--green); }
-    .card-presentation.Bad { border-color: var(--red); }
+    .card-presentation.Legendary { border-color: var(--gold); box-shadow: 0 0 16px var(--gold-glow); }
+    .card-presentation.Rare { border-color: var(--purple); box-shadow: 0 0 16px rgba(168,85,247,0.3); }
+    .card-presentation.Good { border-color: var(--green); box-shadow: 0 0 16px rgba(16,185,129,0.3); }
+    .card-presentation.Bad { border-color: var(--red); box-shadow: 0 0 16px rgba(239,68,68,0.3); }
 
     .segmented-control {
       display: flex;
-      background: #0f172a;
-      border: 1px solid var(--border);
-      border-radius: 8px;
+      background: #090e17;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
       padding: 4px;
       gap: 4px;
       margin-top: 6px;
@@ -395,14 +491,116 @@
       flex: 1;
       padding: 8px 4px;
       font-size: 0.85rem;
-      border-radius: 6px;
+      border-radius: 8px;
       background: transparent;
       color: var(--text-muted);
       border: none;
       min-height: 40px;
       touch-action: manipulation;
     }
-    .segmented-btn.active { background: var(--accent); color: white; font-weight: 700; }
+    .segmented-btn.active { background: var(--accent); color: white; font-weight: 800; }
+
+    /* Memory slots */
+    .memory-slots-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      margin: 10px 0;
+    }
+    .memory-slot {
+      aspect-ratio: 2/3;
+      border: 2px dashed #475569;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #090e17;
+      position: relative;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .memory-slot.filled { border-style: solid; border-color: var(--accent); }
+    .memory-slot.correct { border: 2px solid var(--green); background: #064e3b33; }
+    .memory-slot.wrong { border: 2px solid var(--red); background: #450a0a33; }
+
+    /* ================= 3D JOKER ARENA TABLE ================= */
+    .poker-table-wrapper {
+      perspective: 900px;
+      margin: 10px 0;
+    }
+    .poker-table-surface {
+      background: radial-gradient(ellipse at center, #065f46 0%, #022c22 65%, #011913 100%);
+      border: 8px solid #3b2818;
+      outline: 2px solid #78350f;
+      border-radius: 120px;
+      padding: 16px 12px;
+      box-shadow: 0 16px 35px rgba(0,0,0,0.8), inset 0 0 40px rgba(0,0,0,0.6);
+      transform: rotateX(16deg);
+      position: relative;
+    }
+    .table-center-ring {
+      border: 1.5px dashed rgba(255,255,255,0.2);
+      border-radius: 80px;
+      padding: 12px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 120px;
+      text-align: center;
+    }
+    .table-seats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(115px, 1fr));
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .table-seat {
+      background: rgba(15, 23, 42, 0.88);
+      border: 2px solid #334155;
+      border-radius: 12px;
+      padding: 8px 6px;
+      text-align: center;
+      position: relative;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.4);
+    }
+    .table-seat.is-neighbor-draw {
+      border-color: #38bdf8;
+      box-shadow: 0 0 16px rgba(56, 189, 248, 0.45);
+      background: rgba(14, 42, 71, 0.95);
+    }
+
+    /* Radar Signs for Joker and Trap */
+    .radar-sign {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 3px 8px;
+      border-radius: 20px;
+      font-size: 0.65rem;
+      font-weight: 900;
+      white-space: nowrap;
+      z-index: 20;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.7);
+      animation: float-pulse 1.8s infinite ease-in-out;
+    }
+    .radar-sign.joker-sign {
+      background: linear-gradient(135deg, #fef08a, #f59e0b);
+      color: #78350f;
+      border: 1.5px solid #fff;
+    }
+    .radar-sign.trap-sign {
+      background: linear-gradient(135deg, #ef4444, #991b1b);
+      color: #fff;
+      border: 1.5px solid #fca5a5;
+    }
+    @keyframes float-pulse {
+      0%, 100% { transform: translate(-50%, 0) scale(1); }
+      50% { transform: translate(-50%, -4px) scale(1.06); }
+    }
   </style>
 </head>
 <body>
@@ -441,7 +639,7 @@
         <span>🎲 Board Battle</span>
       </div>
       <div class="header-actions">
-        <span id="round-counter" style="font-weight: 700; color: #a5b4fc; font-size: 0.95rem;">Round 1</span>
+        <span id="round-counter" style="font-weight: 800; color: #a5b4fc; font-size: 0.95rem;">Round 1</span>
         <button class="secondary" style="min-height: 36px; padding: 4px 10px; font-size: 0.8rem;" onclick="game.resetPrompt()">Restart</button>
       </div>
     </header>
@@ -503,20 +701,115 @@
     });
 
     /* =====================================================================
-       SVG ASSETS
+       ENHANCED DELUXE SVG HERO PORTRAITS
        ===================================================================== */
     function getCharacterAvatarSVG(charId, size = 32) {
       switch (charId) {
-        case 'c1': return `<svg width="${size}" height="${size}" viewBox="0 0 40 40"><rect width="40" height="40" rx="8" fill="#064e3b"/><path d="M20 9C17 9 15 12 17 15C14 13 11 15 11 18C11 21 14 23 17 21C15 24 17 27 20 27C23 27 25 24 23 21C26 23 29 21 29 18C29 15 26 13 23 15C25 12 23 9 20 9Z" fill="#34d399"/><circle cx="20" cy="18" r="2.5" fill="#fef08a"/></svg>`;
-        case 'c2': return `<svg width="${size}" height="${size}" viewBox="0 0 40 40"><rect width="40" height="40" rx="8" fill="#4c1d95"/><path d="M12 22C12 28 16 32 20 32C24 32 28 28 28 22C28 14 20 10 20 10C20 10 12 14 12 22Z" fill="#a855f7"/><circle cx="10" cy="14" r="2" fill="#fef08a"/><circle cx="30" cy="14" r="2" fill="#fef08a"/></svg>`;
-        case 'c3': return `<svg width="${size}" height="${size}" viewBox="0 0 40 40"><rect width="40" height="40" rx="8" fill="#1e3a5f"/><path d="M20 8L30 13V22C30 28 25 33 20 35C15 33 10 28 10 22V13L20 8Z" fill="#38bdf8"/><path d="M20 14V28M13 21H27" stroke="#0f172a" stroke-width="2.5"/></svg>`;
-        case 'c4': return `<svg width="${size}" height="${size}" viewBox="0 0 40 40"><rect width="40" height="40" rx="8" fill="#78350f"/><path d="M8 26L18 20L14 14L26 12L24 22L32 26" stroke="#fbbf24" stroke-width="3"/><circle cx="28" cy="10" r="3.5" fill="#fef08a"/></svg>`;
-        case 'c5': return `<svg width="${size}" height="${size}" viewBox="0 0 40 40"><rect width="40" height="40" rx="8" fill="#1e1e38"/><path d="M16 32H24V28H22L24 20C26 18 25 14 21 12C20 10 17 10 16 12C13 14 14 18 16 20L18 28H16V32Z" fill="#818cf8"/></svg>`;
-        case 'c6': return `<svg width="${size}" height="${size}" viewBox="0 0 40 40"><rect width="40" height="40" rx="8" fill="#0f172a"/><path d="M12 28C12 20 15 12 20 10C25 12 28 20 28 28C28 32 20 33 20 33C20 33 12 32 12 28Z" fill="#334155"/><circle cx="18" cy="22" r="1.5" fill="#38bdf8"/><circle cx="22" cy="22" r="1.5" fill="#38bdf8"/></svg>`;
-        case 'c7': return `<svg width="${size}" height="${size}" viewBox="0 0 40 40"><rect width="40" height="40" rx="8" fill="#374151"/><circle cx="20" cy="12" r="3" stroke="#fff" stroke-width="2"/><path d="M20 15V30M13 20H27" stroke="#fff" stroke-width="2.5"/></svg>`;
-        case 'c8': return `<svg width="${size}" height="${size}" viewBox="0 0 40 40"><rect width="40" height="40" rx="8" fill="#831843"/><rect x="12" y="14" width="12" height="16" rx="2" fill="#fff" transform="rotate(-15 12 14)"/><rect x="16" y="12" width="12" height="16" rx="2" fill="#fff"/><circle cx="22" cy="20" r="3" fill="#e11d48"/></svg>`;
-        case 'c9': return `<svg width="${size}" height="${size}" viewBox="0 0 40 40"><rect width="40" height="40" rx="8" fill="#312e81"/><path d="M10 28H30M14 28V16H26V28" stroke="#c084fc" stroke-width="3"/><rect x="14" y="24" width="12" height="4" fill="#f43f5e"/></svg>`;
-        case 'c10': return `<svg width="${size}" height="${size}" viewBox="0 0 40 40"><rect width="40" height="40" rx="8" fill="#881337"/><path d="M20 28L14 21C11 18 12 13 16 13C18 13 20 15 20 15C20 15 22 13 24 13C28 13 29 18 26 21L20 28Z" fill="#fb7185"/></svg>`;
+        // The Lucky One: Emerald 4-leaf clover with a golden crown
+        case 'c1': return `
+          <svg width="${size}" height="${size}" viewBox="0 0 40 40">
+            <defs>
+              <radialGradient id="g-c1" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#34d399"/><stop offset="100%" stop-color="#064e3b"/></radialGradient>
+            </defs>
+            <rect width="40" height="40" rx="8" fill="url(#g-c1)"/>
+            <path d="M20 11C18 7 12 7 12 13C12 18 19 21 20 25C21 21 28 18 28 13C28 7 22 7 20 11Z" fill="#10b981"/>
+            <path d="M11 20C7 18 7 12 13 12C18 12 21 19 25 20C21 21 18 28 13 28C7 28 7 22 11 20Z" fill="#059669"/>
+            <path d="M29 20C33 18 33 12 27 12C22 12 19 19 15 20C19 21 22 28 27 28C33 28 33 22 29 20Z" fill="#10b981"/>
+            <circle cx="20" cy="20" r="3.5" fill="#facc15"/>
+            <path d="M15 8L17 12L20 9L23 12L25 8L20 6Z" fill="#fde047" stroke="#b45309" stroke-width="0.5"/>
+          </svg>`;
+        // The Trickster: Smiling Jester Masquerade
+        case 'c2': return `
+          <svg width="${size}" height="${size}" viewBox="0 0 40 40">
+            <defs>
+              <radialGradient id="g-c2" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#9333ea"/><stop offset="100%" stop-color="#3b0764"/></radialGradient>
+            </defs>
+            <rect width="40" height="40" rx="8" fill="url(#g-c2)"/>
+            <path d="M10 14Q20 6 30 14Q34 26 20 34Q6 26 10 14Z" fill="#c084fc"/>
+            <ellipse cx="15" cy="18" rx="2.5" ry="1.5" fill="#fde047"/>
+            <ellipse cx="25" cy="18" rx="2.5" ry="1.5" fill="#fde047"/>
+            <path d="M13 25Q20 31 27 25Q20 28 13 25Z" fill="#581c87"/>
+            <circle cx="9" cy="11" r="2.5" fill="#fbbf24"/>
+            <circle cx="31" cy="11" r="2.5" fill="#fbbf24"/>
+          </svg>`;
+        // The Guardian: Armored Winged Aegis
+        case 'c3': return `
+          <svg width="${size}" height="${size}" viewBox="0 0 40 40">
+            <defs>
+              <linearGradient id="g-c3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0284c7"/><stop offset="100%" stop-color="#082f49"/></linearGradient>
+            </defs>
+            <rect width="40" height="40" rx="8" fill="url(#g-c3)"/>
+            <path d="M20 7L31 12V23C31 29 26 34 20 36C14 34 9 29 9 23V12L20 7Z" fill="#38bdf8"/>
+            <path d="M20 11L28 15V22C28 26 24 30 20 32C16 30 12 26 12 22V15L20 11Z" fill="#0369a1"/>
+            <path d="M20 14V28M15 20H25" stroke="#f8fafc" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>`;
+        // The Runner: Lightning Speed Visor
+        case 'c4': return `
+          <svg width="${size}" height="${size}" viewBox="0 0 40 40">
+            <defs>
+              <linearGradient id="g-c4" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#b45309"/><stop offset="100%" stop-color="#451a03"/></linearGradient>
+            </defs>
+            <rect width="40" height="40" rx="8" fill="url(#g-c4)"/>
+            <path d="M6 22H18L14 34L32 18H20L25 8L6 22Z" fill="#facc15" stroke="#78350f" stroke-width="1"/>
+            <circle cx="28" cy="12" r="3" fill="#38bdf8"/>
+            <path d="M4 14H12M2 18H10" stroke="#fef08a" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>`;
+        // The Strategist: Cyber Tactical Mastermind
+        case 'c5': return `
+          <svg width="${size}" height="${size}" viewBox="0 0 40 40">
+            <defs>
+              <radialGradient id="g-c5" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#4f46e5"/><stop offset="100%" stop-color="#0f172a"/></radialGradient>
+            </defs>
+            <rect width="40" height="40" rx="8" fill="url(#g-c5)"/>
+            <circle cx="20" cy="16" r="8" fill="#818cf8"/>
+            <rect x="13" y="14" width="14" height="4" rx="2" fill="#38bdf8"/>
+            <path d="M14 32L17 25H23L26 32Z" fill="#c7d2fe"/>
+            <path d="M19 6H21V10H19Z" fill="#facc15"/>
+          </svg>`;
+        // The Thief: Shadow Stealth Hood
+        case 'c6': return `
+          <svg width="${size}" height="${size}" viewBox="0 0 40 40">
+            <rect width="40" height="40" rx="8" fill="#090d16"/>
+            <path d="M12 12C12 12 20 6 28 12C32 20 30 32 20 34C10 32 8 20 12 12Z" fill="#1e293b"/>
+            <path d="M14 20H26V26C26 26 20 29 14 26V20Z" fill="#dc2626"/>
+            <ellipse cx="17" cy="18" rx="2" ry="1.2" fill="#38bdf8"/>
+            <ellipse cx="23" cy="18" rx="2" ry="1.2" fill="#38bdf8"/>
+          </svg>`;
+        // The Persistent One: Ancient Stone Golem
+        case 'c7': return `
+          <svg width="${size}" height="${size}" viewBox="0 0 40 40">
+            <rect width="40" height="40" rx="8" fill="#1f2937"/>
+            <polygon points="12,12 28,12 32,28 20,34 8,28" fill="#4b5563"/>
+            <rect x="14" y="17" width="4" height="3" fill="#f59e0b"/>
+            <rect x="22" y="17" width="4" height="3" fill="#f59e0b"/>
+            <path d="M16 26H24" stroke="#111827" stroke-width="2"/>
+          </svg>`;
+        // The Gambler: High Roller Dice & Cards
+        case 'c8': return `
+          <svg width="${size}" height="${size}" viewBox="0 0 40 40">
+            <rect width="40" height="40" rx="8" fill="#831843"/>
+            <rect x="10" y="14" width="13" height="18" rx="2" fill="#fff" transform="rotate(-15 10 14)"/>
+            <rect x="16" y="12" width="13" height="18" rx="2" fill="#fef08a"/>
+            <circle cx="22.5" cy="21" r="3" fill="#e11d48"/>
+            <circle cx="28" cy="9" r="2.5" fill="#facc15"/>
+          </svg>`;
+        // The Magician: Mystic Sorcerer Star Hat
+        case 'c9': return `
+          <svg width="${size}" height="${size}" viewBox="0 0 40 40">
+            <rect width="40" height="40" rx="8" fill="#1e1b4b"/>
+            <path d="M8 32H32L20 8Z" fill="#6366f1"/>
+            <path d="M16 28L20 18L24 28" stroke="#facc15" stroke-width="2"/>
+            <circle cx="20" cy="8" r="2.5" fill="#fde047"/>
+            <circle cx="13" cy="26" r="1.5" fill="#38bdf8"/>
+            <circle cx="27" cy="26" r="1.5" fill="#38bdf8"/>
+          </svg>`;
+        // The Charmer: Radiant Heart Prism
+        case 'c10': return `
+          <svg width="${size}" height="${size}" viewBox="0 0 40 40">
+            <rect width="40" height="40" rx="8" fill="#881337"/>
+            <path d="M20 31L13 23C9 19 11 12 16 12C18 12 20 15 20 15C20 15 22 12 24 12C29 12 31 19 27 23L20 31Z" fill="#fb7185"/>
+            <circle cx="20" cy="18" r="3" fill="#fff"/>
+          </svg>`;
         default: return `<svg width="${size}" height="${size}" viewBox="0 0 40 40"><rect width="40" height="40" rx="8" fill="#475569"/></svg>`;
       }
     }
@@ -576,20 +869,23 @@
       { id: 'card_shield', name: 'Protection Shield', tier: 'Good', desc: 'Blocks the next negative card/effect targeted at you.' },
       { id: 'card_double', name: 'Double Reward', tier: 'Good', desc: 'Next mini-game win advances 2 spaces instead of 1.' },
       { id: 'card_theft', name: 'Future Card Theft', tier: 'Good', desc: 'Choose a player and secretly steal their next milestone special card.' },
-      { id: 'card_extra_chance', name: 'Extra Chance', tier: 'Good', desc: 'Grants an extra hit in Blackjack OR an extra retry in Push Your Luck (18 Cards).' },
+      { id: 'card_extra_chance', name: 'Extra Chance', tier: 'Good', desc: 'Grants an extra hit in Blackjack OR an extra retry in Push Your Luck.' },
       { id: 'card_back_step', name: 'Backward Step', tier: 'Bad', desc: 'Immediately move backward 2 spaces.' },
       { id: 'card_unlucky_win', name: 'Unlucky Wins', tier: 'Bad', desc: 'Next time you win a mini-game, move backward 1 space instead.' }
     ];
 
-    const BOT_NAMES = ['Aura', 'Byte', 'Cipher', 'Dexter', 'Echo', 'Frost', 'Gizmo'];
-    const PLAYER_COLORS = ['#6366f1', '#ec4899', '#14b8a6', '#f59e0b', '#8b5cf6', '#06b6d4', '#84cc16', '#f43f5e'];
+    const BOT_NAMES = ['Aura', 'Byte', 'Cipher', 'Dexter', 'Echo', 'Frost', 'Gizmo', 'Nova', 'Vortex'];
+    const PLAYER_COLORS = ['#6366f1', '#ec4899', '#14b8a6', '#f59e0b', '#8b5cf6', '#06b6d4', '#84cc16', '#f43f5e', '#e11d48'];
 
     const MINI_GAMES = [
       { id: 'mg1', name: 'Blackjack Showdown' },
       { id: 'mg2', name: 'Think Outside the Box' },
       { id: 'mg3', name: 'Push Your Luck (18 Hidden Cards)' },
       { id: 'mg4', name: 'Guess Number That Completes 15' },
-      { id: 'mg5', name: 'Find Joker & Escape Trap' }
+      { id: 'mg5', name: 'Find Joker & Escape Trap' },
+      { id: 'mg6', name: 'High Card: Hidden Choice' },
+      { id: 'mg7', name: 'Greedy Treasure' },
+      { id: 'mg8', name: 'Memory Hunt' }
     ];
 
     /* =====================================================================
@@ -613,7 +909,19 @@
         this.usedQuestionIndices = [];
         this.selectedPlayerCount = 6;
         this.selectedBoardLength = 15;
+        this.activeTimers = [];
         this.initDeck();
+      }
+
+      clearActiveTimers() {
+        if (this.activeTimers && this.activeTimers.length > 0) {
+          this.activeTimers.forEach(t => clearInterval(t));
+          this.activeTimers = [];
+        }
+      }
+
+      addTimer(timerId) {
+        this.activeTimers.push(timerId);
       }
 
       initDeck() {
@@ -686,6 +994,7 @@
       }
 
       startNewGame(totalPlayers = 6, boardLength = 15) {
+        this.clearActiveTimers();
         localStorage.removeItem('board_game_ai_save');
         this.round = 1;
         this.maxPos = boardLength;
@@ -734,11 +1043,11 @@
         for (let i = 1; i < totalPlayers; i++) {
           this.players.push({
             id: i,
-            name: `Bot ${BOT_NAMES[i - 1]}`,
+            name: `Bot ${BOT_NAMES[(i - 1) % BOT_NAMES.length]}`,
             isHuman: false,
             color: PLAYER_COLORS[i % PLAYER_COLORS.length],
             pos: 0,
-            char: shuffledChars[i],
+            char: shuffledChars[i % shuffledChars.length],
             charUsed: false,
             activeCharOption: null,
             cards: [],
@@ -825,91 +1134,175 @@
         modal.innerHTML = `
           <div class="modal-overlay">
             <div class="modal" style="text-align:center;">
-              <div style="font-size:3rem; margin-bottom:8px;">🌟</div>
-              <h2 style="color:var(--gold);">Milestone Stage ${stage} Reached!</h2>
-              <p style="color:var(--text-muted); margin: 12px 0;">First player reached space ${stage}. Everyone draws a Special Card!</p>
-              <button class="gold" style="width:100%;" onclick="game.resolveGlobalDrawSequence(${stage})">Draw All Cards</button>
+              <div style="font-size:3.5rem; margin-bottom:8px; filter: drop-shadow(0 0 14px #f59e0b);">⭐</div>
+              <h2 style="color:var(--gold); font-size:1.6rem;">Milestone Stage ${stage} Reached!</h2>
+              <p style="color:var(--text-muted); margin: 12px 0; font-size:0.95rem;">
+                A player has touched block <strong>#${stage}</strong>! All contenders unlock a Special Card from the deck.
+              </p>
+              <button class="gold" style="width:100%; font-size:1.05rem;" onclick="game.resolveGlobalDrawSequence(${stage})">
+                🎁 Draw All Milestone Cards
+              </button>
             </div>
           </div>
         `;
       }
 
+      /* =====================================================================
+         EDIT: THEFT RECEIVES TWO CARDS (THEIR OWN + THE STOLEN CARD)
+         ===================================================================== */
       resolveGlobalDrawSequence(stage) {
         document.getElementById('modal-container').innerHTML = '';
-        this.players.forEach(player => {
-          this.handleMilestoneDraw(player, stage);
-        });
-      }
+        const human = this.players[0];
 
-      handleMilestoneDraw(player, milestoneLevel) {
-        if (player.reservedTheftBy !== null) {
-          const thief = this.players.find(x => x.id === player.reservedTheftBy);
-          player.reservedTheftBy = null;
-          const stolenCard = this.drawCardFromDeck();
-          this.log(`🕵️ SURPRISE CARD THEFT! ${player.name}'s milestone card was stolen by ${thief ? thief.name : 'an opponent'}!`, 'loss');
-          if (player.isHuman && thief) {
-            this.showAmbushTheftModal(thief, stolenCard);
-          }
-          if (thief) this.giveCardToPlayer(thief, stolenCard);
-          return;
-        }
+        // Track distribution mapping
+        const stolenCardsMap = {}; // thiefId -> array of stolen cards
+        const victimAlerts = [];
 
-        if (player.char.id === 'c1') {
-          const c1 = this.drawCardFromDeck();
-          const c2 = this.drawCardFromDeck();
-          if (player.isHuman) {
-            this.promptLuckyOneChoice(player, c1, c2);
-          } else {
-            const choice = (c1.tier === 'Legendary' || c1.tier === 'Rare') ? c1 : c2;
-            const other = choice === c1 ? c2 : c1;
-            this.returnCardToBottom(other);
-            this.giveCardToPlayer(player, choice);
-          }
-          return;
-        }
+        // 1. Resolve Steal mechanics first
+        this.players.forEach(p => {
+          if (p.reservedTheftBy !== null) {
+            const thief = this.players.find(t => t.id === p.reservedTheftBy);
+            const stolenCard = this.drawCardFromDeck();
+            p.reservedTheftBy = null; // consume theft
 
-        const card = this.drawCardFromDeck();
+            if (thief) {
+              if (!stolenCardsMap[thief.id]) stolenCardsMap[thief.id] = [];
+              stolenCardsMap[thief.id].push({ from: p, card: stolenCard });
+              this.log(`🕵️ SURPRISE HEIST! ${p.name}'s milestone card was stolen by ${thief.name}!`, 'loss');
 
-        if (player.char.id === 'c9') {
-          if (player.isHuman) {
-            this.promptMagicianChoice(player, card);
-            return;
-          } else {
-            if (card.tier === 'Bad') {
-              this.returnCardToBottom(card);
-              const replaced = this.drawCardFromDeck();
-              this.log(`${player.name} (Magician) replaces ${card.name} with ${replaced.name}!`, 'effect');
-              this.giveCardToPlayer(player, replaced);
-              return;
+              if (p.isHuman) {
+                victimAlerts.push({ thief, card: stolenCard });
+              }
             }
           }
-        }
+        });
 
-        this.giveCardToPlayer(player, card);
+        // 2. Distribute regular milestone cards to non-victims & give thieves their 2nd cards
+        this.players.forEach(player => {
+          // If this player was a victim of theft, they receive 0 milestone cards
+          const wasVictim = victimAlerts.some(v => v.thief && player.isHuman);
+          const hadTheftAgainst = this.players.some(t => stolenCardsMap[t.id] && stolenCardsMap[t.id].some(item => item.from.id === player.id));
+
+          if (hadTheftAgainst) {
+            // Victim gets NO card this block
+            if (player.isHuman) {
+              const info = victimAlerts[0];
+              this.showVictimRobbedModal(info.thief, info.card);
+            }
+          } else {
+            // Player gets their regular milestone card
+            this.handleMilestoneDraw(player, stage, stolenCardsMap[player.id] || null);
+          }
+        });
+
+        this.renderPlayers();
+        this.renderBoard();
       }
 
-      showAmbushTheftModal(thief, stolenCard) {
+      showVictimRobbedModal(thief, stolenCard) {
         const modal = document.getElementById('modal-container');
         modal.innerHTML = `
           <div class="modal-overlay">
             <div class="modal" style="text-align:center;">
               <div style="font-size:3rem; margin-bottom:8px;">🕵️</div>
-              <h2 style="color:var(--red);">AMBUSH! Card Stolen!</h2>
-              <p style="margin:10px 0;"><strong>${thief.name}</strong> secretly targeted you earlier and intercepted your card!</p>
+              <h2 style="color:var(--red);">AMBUSH! Your Card Was Stolen!</h2>
+              <p style="margin:10px 0; font-size:0.9rem;">
+                <strong>${thief.name}</strong> executed a secret card trap and intercepted your milestone card!
+              </p>
               <div class="card-presentation ${stolenCard.tier}">
-                ${getSpecialCardArtSVG(stolenCard.id)}
-                <h3 style="margin-top:8px;">${stolenCard.name}</h3>
+                ${getSpecialCardArtSVG(stolenCard.id, 50)}
+                <h3 style="margin-top:6px;">${stolenCard.name}</h3>
                 <span class="tag gold">${stolenCard.tier}</span>
-                <p style="font-size:0.85rem; color:var(--text-muted); margin-top:6px;">${stolenCard.desc}</p>
+                <p style="font-size:0.8rem; color:var(--text-muted); margin-top:4px;">${stolenCard.desc}</p>
               </div>
-              <button class="secondary" style="width:100%;" onclick="document.getElementById('modal-container').innerHTML=''">Acknowledge Loss</button>
+              <button class="secondary" style="width:100%;" onclick="document.getElementById('modal-container').innerHTML=''">Acknowledge Loss (0 Cards)</button>
             </div>
           </div>
         `;
       }
 
-      giveCardToPlayer(player, card) {
-        this.log(`${player.name} received: [${card.name}] (${card.tier})!`, 'effect');
+      handleMilestoneDraw(player, milestoneLevel, stolenCardItems = null) {
+        // Player draws their regular card
+        let regularCard = null;
+
+        if (player.char.id === 'c1') {
+          // The Lucky One chooses between 2
+          const c1 = this.drawCardFromDeck();
+          const c2 = this.drawCardFromDeck();
+          if (player.isHuman) {
+            this.promptLuckyOneChoice(player, c1, c2, stolenCardItems);
+            return;
+          } else {
+            regularCard = (c1.tier === 'Legendary' || c1.tier === 'Rare') ? c1 : c2;
+            const other = regularCard === c1 ? c2 : c1;
+            this.returnCardToBottom(other);
+          }
+        } else {
+          regularCard = this.drawCardFromDeck();
+        }
+
+        if (player.char.id === 'c9' && !player.isHuman && regularCard.tier === 'Bad') {
+          this.returnCardToBottom(regularCard);
+          regularCard = this.drawCardFromDeck();
+        }
+
+        // Apply regular card
+        this.giveCardToPlayer(player, regularCard, false);
+
+        // If this player is a thief who stole card(s), give them the 2nd card(s)!
+        if (stolenCardItems && stolenCardItems.length > 0) {
+          stolenCardItems.forEach(item => {
+            this.giveCardToPlayer(player, item.card, false);
+            this.log(`💰 ${player.name} pocketed stolen card [${item.card.name}] from ${item.from.name}!`, 'win');
+          });
+
+          if (player.isHuman) {
+            this.showThiefDoubleCardRewardModal(regularCard, stolenCardItems);
+            return;
+          }
+        } else if (player.isHuman) {
+          this.showCardDrawnPresentationModal(regularCard);
+        }
+      }
+
+      showThiefDoubleCardRewardModal(regularCard, stolenCardItems) {
+        const stolen = stolenCardItems[0];
+        const modal = document.getElementById('modal-container');
+        modal.innerHTML = `
+          <div class="modal-overlay">
+            <div class="modal" style="text-align:center;">
+              <div style="font-size:2.8rem; margin-bottom:4px;">🦹✨</div>
+              <h2 style="color:var(--gold); font-size:1.4rem;">HEIST COMPLETE: 2 CARDS GAINED!</h2>
+              <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:12px;">
+                Your theft trap was sprung! You receive your block card PLUS the card stolen from <strong>${stolen.from.name}</strong>:
+              </p>
+
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                <div class="card-presentation ${regularCard.tier}" style="margin:0; padding:10px;">
+                  <span class="tag gold" style="font-size:0.6rem;">Block Card</span>
+                  ${getSpecialCardArtSVG(regularCard.id, 44)}
+                  <h4 style="margin:4px 0; font-size:0.85rem;">${regularCard.name}</h4>
+                  <p style="font-size:0.7rem; color:var(--text-muted);">${regularCard.desc}</p>
+                </div>
+
+                <div class="card-presentation ${stolen.card.tier}" style="margin:0; padding:10px; border-color:var(--red);">
+                  <span class="tag red" style="font-size:0.6rem;">Stolen from ${stolen.from.name}</span>
+                  ${getSpecialCardArtSVG(stolen.card.id, 44)}
+                  <h4 style="margin:4px 0; font-size:0.85rem;">${stolen.card.name}</h4>
+                  <p style="font-size:0.7rem; color:var(--text-muted);">${stolen.card.desc}</p>
+                </div>
+              </div>
+
+              <button class="gold" style="width:100%; margin-top:14px;" onclick="document.getElementById('modal-container').innerHTML=''">
+                Claim Both Cards & Continue
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
+      giveCardToPlayer(player, card, showPopup = true) {
+        this.log(`${player.name} activated: [${card.name}] (${card.tier})!`, 'effect');
 
         if (card.id === 'card_legendary') {
           this.movePlayer(player.id, 3, 'Legendary Advance');
@@ -965,7 +1358,7 @@
           }
         }
 
-        if (player.isHuman) {
+        if (player.isHuman && showPopup) {
           this.showCardDrawnPresentationModal(card);
         }
 
@@ -978,10 +1371,10 @@
         modal.innerHTML = `
           <div class="modal-overlay">
             <div class="modal" style="text-align:center;">
-              <h3 style="color:var(--gold); font-size:1.1rem;">✨ SPECIAL CARD DRAWN ✨</h3>
+              <h3 style="color:var(--gold); font-size:1.15rem;">✨ SPECIAL CARD DRAWN ✨</h3>
               <div class="card-presentation ${card.tier}">
-                ${getSpecialCardArtSVG(card.id, 70)}
-                <h2 style="margin-top:10px; font-size:1.3rem;">${card.name}</h2>
+                ${getSpecialCardArtSVG(card.id, 68)}
+                <h2 style="margin-top:8px; font-size:1.3rem;">${card.name}</h2>
                 <span class="tag ${card.tier === 'Legendary' ? 'gold' : card.tier === 'Rare' ? 'purple' : card.tier === 'Good' ? 'green' : ''}" style="margin:6px 0; display:inline-block;">
                   ${card.tier} Tier
                 </span>
@@ -1019,9 +1412,6 @@
         this.movePlayer(target.id, -setbackSteps, sourceDescription);
       }
 
-      /* ===================================================================
-         CRUCIAL: MINI-GAME ROUND RESULTS & RESOLUTION ENGINE
-         =================================================================== */
       setPendingResults(winners, losers, winReward = 1, losePenalty = 1) {
         this.pendingResults = {
           winners: Array.from(new Set(winners)),
@@ -1033,6 +1423,7 @@
       }
 
       applyPendingResults() {
+        this.clearActiveTimers();
         if (!this.pendingResults) {
           this.showRoundTransitionScreen();
           return;
@@ -1048,27 +1439,23 @@
 
           let reward = winReward;
 
-          // c4 (The Runner): First mini-game win advances 2 spaces instead of 1
           if (p.char.id === 'c4' && !p.hasWonMiniGame) {
             reward = Math.max(reward, 2);
             this.log(`⚡ ${p.name} (The Runner) first win bonus applied!`, 'win');
           }
 
-          // Double Reward Card
           if (p.doubleRewardActive) {
             reward *= 2;
             p.doubleRewardActive = false;
             this.log(`✨ ${p.name} consumed Double Reward (+${reward} spaces)!`, 'win');
           }
 
-          // Gambler active wager
           if (p.char.id === 'c8' && p.activeCharOption === 'WAGER') {
             reward += 2;
             p.activeCharOption = null;
             this.log(`🎲 ${p.name} won Gambler Wager (+2 extra spaces)!`, 'win');
           }
 
-          // Unlucky Win Card: Next win moves backward 1 space instead
           if (p.unluckyWinActive) {
             p.unluckyWinActive = false;
             this.log(`💥 ${p.name}'s victory was corrupted by Unlucky Wins (-1 space)!`, 'loss');
@@ -1080,7 +1467,7 @@
           p.hasWonMiniGame = true;
         });
 
-        // 2. Charmer (c10) link bonus
+        // 2. Charmer link bonus
         this.players.forEach(p => {
           if (p.char.id === 'c10' && p.activeCharOption !== null) {
             const charmedId = p.activeCharOption;
@@ -1094,13 +1481,11 @@
 
         // 3. Process Losers
         losers.forEach(lId => {
-          // If a player somehow qualified for both, winning priority wins
           if (winners.includes(lId)) return;
 
           const p = this.players.find(x => x.id === lId);
           if (!p) return;
 
-          // Comeback Card: First time losing, advance +1 space with winners
           if (p.hasComeback) {
             p.hasComeback = false;
             this.log(`🔄 ${p.name} activated Comeback card and gains +1 space instead!`, 'win');
@@ -1108,7 +1493,6 @@
             return;
           }
 
-          // The Persistent One (c7): First time losing with move penalty, stay in place
           if (p.char.id === 'c7' && !p.charUsed) {
             p.charUsed = true;
             this.log(`🛡️ ${p.name} (The Persistent One) stood firm and resisted the move penalty!`, 'win');
@@ -1136,6 +1520,7 @@
       }
 
       showRoundTransitionScreen() {
+        this.clearActiveTimers();
         if (this.status === 'GAME_OVER') return;
         this.status = 'PRE_ROUND';
         this.resolvingRound = false;
@@ -1160,10 +1545,10 @@
 
         document.getElementById('arena-panel').innerHTML = `
           <div style="text-align:center; padding: 24px 12px; display:flex; flex-direction:column; align-items:center; justify-content:center; flex:1;">
-            <div style="font-size:3rem; margin-bottom:8px;">🎲</div>
-            <h2 style="color:var(--gold); font-size:1.6rem; margin-bottom:6px;">Ready for Round ${this.round}!</h2>
+            <div style="font-size:3.2rem; margin-bottom:8px;">🎲</div>
+            <h2 style="color:var(--gold); font-size:1.65rem; margin-bottom:6px;">Ready for Round ${this.round}!</h2>
             <p style="color:var(--text-muted); max-width:440px; margin-bottom:14px; font-size:0.9rem;">
-              Standings and board positions have been updated (${this.maxPos} blocks total).
+              Board positions updated (${this.maxPos} blocks total). Check standings and launch the next mini-game!
             </p>
             ${this.strategistChoice ? `<div style="color:var(--gold); font-weight:bold; margin-bottom:10px;">(Strategist Selected: ${this.strategistChoice.name})</div>` : ''}
             ${abilitiesHtml ? `<div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-bottom:16px;">${abilitiesHtml}</div>` : ''}
@@ -1177,6 +1562,7 @@
       }
 
       startMiniGameRound() {
+        this.clearActiveTimers();
         let selectedGame = this.strategistChoice;
         if (!selectedGame) {
           selectedGame = MINI_GAMES[Math.floor(Math.random() * MINI_GAMES.length)];
@@ -1196,11 +1582,15 @@
       }
 
       launchMiniGame(mgId) {
+        this.clearActiveTimers();
         if (mgId === 'mg1') this.setupBlackjack();
         else if (mgId === 'mg2') this.setupThinkOutsideBox();
         else if (mgId === 'mg3') this.setupPushYourLuck();
         else if (mgId === 'mg4') this.setupGuess15();
         else if (mgId === 'mg5') this.setupJokerTrap();
+        else if (mgId === 'mg6') this.setupHighCardHidden();
+        else if (mgId === 'mg7') this.setupGreedyTreasure();
+        else if (mgId === 'mg8') this.setupMemoryHunt();
       }
 
       getInGameAbilityBar() {
@@ -1279,8 +1669,8 @@
             ${this.getInGameAbilityBar()}
           </div>
 
-          <div style="background:#0f172a; padding:12px; border-radius:10px;">
-            <h4 style="margin-bottom:6px; font-size:0.95rem;">Your Hand (Total: <span style="color:var(--gold); font-size:1.2rem;">${humanScore}</span> ${humanScore > 21 ? 'BUSTED!' : ''})</h4>
+          <div style="background:#090e17; padding:14px; border-radius:12px;">
+            <h4 style="margin-bottom:8px; font-size:0.95rem;">Your Hand (Total: <span style="color:var(--gold); font-size:1.25rem;">${humanScore}</span> ${humanScore > 21 ? 'BUSTED!' : ''})</h4>
             <div class="cards-row">
               ${human.hand.map(c => `
                 <div class="deck-playing-card ${c.isRed ? 'red' : ''}">
@@ -1300,12 +1690,12 @@
             </div>
           </div>
 
-          <h4 style="margin-top:8px; font-size:0.85rem; color:var(--text-muted);">Opponents</h4>
+          <h4 style="margin-top:10px; font-size:0.85rem; color:var(--text-muted);">Opponents</h4>
           <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:8px;">
             ${state.bjPlayers.filter(bp => !bp.player.isHuman).map(bp => {
               const sc = this.calcHandScore(bp.hand);
               return `
-                <div style="background:#0f172a; padding:8px; border-radius:6px; border:1px solid #334155; font-size:0.8rem;">
+                <div style="background:#090e17; padding:8px; border-radius:8px; border:1px solid #1e293b; font-size:0.8rem;">
                   <div style="font-weight:bold; color:${bp.player.color}">${bp.player.name}</div>
                   <div style="color:var(--text-muted); font-size:0.75rem;">Cards: ${bp.hand.length} | ${bp.isStand ? 'Stood' : 'Thinking...'}</div>
                   <div style="margin-top:2px;">${human.isStand ? `Score: <strong>${sc}</strong> ${sc > 21 ? '❌' : '✔️'}` : '🂠 🂠 Hidden'}</div>
@@ -1414,7 +1804,7 @@
           </div>
           <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:8px; margin: 12px 0;">
             ${state.bjPlayers.map(bp => `
-              <div style="background:#0f172a; padding:8px; border-radius:6px; border:2px solid ${winners.includes(bp.player.id) ? 'var(--green)' : losers.includes(bp.player.id) ? 'var(--red)' : '#334155'}; font-size:0.85rem;">
+              <div style="background:#090e17; padding:8px; border-radius:8px; border:2px solid ${winners.includes(bp.player.id) ? 'var(--green)' : losers.includes(bp.player.id) ? 'var(--red)' : '#1e293b'}; font-size:0.85rem;">
                 <div style="font-weight:bold; color:${bp.player.color};">${bp.player.name}</div>
                 <div>Score: <strong>${bp.finalScore}</strong> ${bp.busted ? '(BUST)' : ''}</div>
                 <div style="font-size:0.75rem; margin-top:3px;">
@@ -1466,8 +1856,8 @@
             </div>
             ${this.getInGameAbilityBar()}
           </div>
-          <div style="background:#0f172a; padding:14px; border-radius:10px; margin: 8px 0;">
-            <h3 style="color:#e2e8f0; font-size:1.1rem; margin-bottom:8px;">${currentQ.q}</h3>
+          <div style="background:#090e17; padding:14px; border-radius:12px; margin: 8px 0;">
+            <h3 style="color:#e2e8f0; font-size:1.1rem; margin-bottom:10px;">${currentQ.q}</h3>
             <div class="choice-button-grid">
               ${currentQ.options.map(opt => `
                 <button class="secondary" style="padding:12px; font-size:0.95rem; text-align:left; justify-content:flex-start;" onclick="game.thinkBoxChoose('${opt.replace(/'/g, "\\'")}')">
@@ -1520,7 +1910,7 @@
           <div class="arena-header">
             <h2>Round ${state.currentRoundIdx + 1} Results</h2>
           </div>
-          <div style="background:#0f172a; padding:12px; border-radius:10px;">
+          <div style="background:#090e17; padding:12px; border-radius:12px;">
             <div style="display:flex; gap:6px; margin: 8px 0; flex-wrap:wrap;">
               ${Object.entries(voteCounts).map(([opt, cnt]) => `
                 <div style="background:#1e293b; padding:6px 10px; border-radius:6px; font-size:0.85rem; border: 1px solid ${leastPopularOptions.includes(opt) ? 'var(--gold)' : '#334155'}">
@@ -1563,7 +1953,7 @@
           </div>
           <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:8px; margin: 12px 0;">
             ${sorted.map(s => `
-              <div style="background:#0f172a; padding:8px; border-radius:6px; border:2px solid ${winners.includes(s.id) ? 'var(--green)' : losers.includes(s.id) ? 'var(--red)' : '#334155'}; font-size:0.85rem;">
+              <div style="background:#090e17; padding:8px; border-radius:8px; border:2px solid ${winners.includes(s.id) ? 'var(--green)' : losers.includes(s.id) ? 'var(--red)' : '#1e293b'}; font-size:0.85rem;">
                 <div style="font-weight:bold;">${s.name}</div>
                 <div>Points: <strong>${s.score}</strong></div>
                 <div style="font-size:0.75rem;">
@@ -1636,7 +2026,7 @@
           </div>
 
           ${state.humanAttemptScore !== null ? `
-            <div style="background:#0f172a; padding:12px; border-radius:8px; margin: 8px 0;">
+            <div style="background:#090e17; padding:12px; border-radius:10px; margin: 8px 0;">
               <h3>Your Score: <span style="color:var(--gold); font-size:1.3rem;">${state.humanAttemptScore}</span></h3>
               <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
                 <button class="success" style="flex:1;" onclick="game.pushLuckKeep()">Keep Score</button>
@@ -1716,7 +2106,7 @@
             ${results.map(r => {
               const p = this.players.find(x => x.id === r.id);
               return `
-                <div style="background:#0f172a; padding:8px; border-radius:6px; border:2px solid ${winners.includes(r.id) ? 'var(--green)' : losers.includes(r.id) ? 'var(--red)' : '#334155'}; font-size:0.85rem;">
+                <div style="background:#090e17; padding:8px; border-radius:8px; border:2px solid ${winners.includes(r.id) ? 'var(--green)' : losers.includes(r.id) ? 'var(--red)' : '#1e293b'}; font-size:0.85rem;">
                   <div style="font-weight:bold; color:${p.color};">${p.name}</div>
                   <div>Score: <strong>${r.score}</strong></div>
                   <div style="font-size:0.75rem;">
@@ -1749,7 +2139,7 @@
             </div>
             ${this.getInGameAbilityBar()}
           </div>
-          <div style="background:#0f172a; padding:14px; border-radius:10px; margin: 8px 0;">
+          <div style="background:#090e17; padding:14px; border-radius:12px; margin: 8px 0;">
             <div style="display:grid; grid-template-columns: repeat(5, 1fr); gap:6px;">
               ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => `
                 <button style="font-size:1.1rem; padding:10px 0;" onclick="game.chooseGuess15(${n})">${n}</button>
@@ -1788,12 +2178,12 @@
           <div class="arena-header">
             <h2>🎯 Revealed Results</h2>
           </div>
-          <div style="background:#0f172a; padding:12px; border-radius:8px; margin: 8px 0; text-align:center;">
+          <div style="background:#090e17; padding:12px; border-radius:10px; margin: 8px 0; text-align:center;">
             <div>Shared Hidden Card: <strong style="color:var(--gold); font-size:1.6rem;">${state.sharedCard}</strong></div>
           </div>
           <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:8px; margin-bottom:12px;">
             ${scored.map(s => `
-              <div style="background:#0f172a; padding:8px; border-radius:6px; border:2px solid ${winners.includes(s.id) ? 'var(--green)' : losers.includes(s.id) ? 'var(--red)' : '#334155'}; font-size:0.85rem;">
+              <div style="background:#090e17; padding:8px; border-radius:8px; border:2px solid ${winners.includes(s.id) ? 'var(--green)' : losers.includes(s.id) ? 'var(--red)' : '#1e293b'}; font-size:0.85rem;">
                 <div style="font-weight:bold; color:${s.color};">${s.name}</div>
                 <div>Pick: ${s.choice} (Sum: <strong>${s.total}</strong>)</div>
                 <div>Diff: <strong>${s.diff}</strong></div>
@@ -1809,7 +2199,7 @@
       }
 
       /* ===================================================================
-         MINI-GAME 5: JOKER & TRAP (PLAYING CARDS)
+         EDIT: EXCITING 3D TABLE VIEW + JOKER/TRAP SIGNS (MINI-GAME 5)
          =================================================================== */
       setupJokerTrap() {
         const n = this.players.length;
@@ -1856,13 +2246,14 @@
         let html = `
           <div class="arena-header">
             <div>
-              <h2>🃏 Joker & Trap</h2>
-              <p style="color:var(--text-muted); font-size:0.8rem;">Step 1: Pick 1 face-down card!</p>
+              <h2>🃏 Joker & Trap: Initial Pick</h2>
+              <p style="color:var(--text-muted); font-size:0.8rem;">Pick 1 face-down mystery card to form your starting hand!</p>
             </div>
             ${this.getInGameAbilityBar()}
           </div>
 
-          <div style="background:#0f172a; padding:14px; border-radius:10px; margin: 8px 0;">
+          <div style="background:#090e17; padding:14px; border-radius:12px; margin: 8px 0; text-align:center;">
+            <p style="font-size:0.85rem; color:#cbd5e1; margin-bottom:10px;">One holds the Joker, one holds the Trap, others are safe:</p>
             <div class="cards-row">
               ${state.mysteryPool.map((c, idx) => `
                 <div class="mystery-card" style="width:58px; height:84px; font-size:1.3rem;" onclick="game.jokerTrapChooseInitial(${idx})">
@@ -1892,7 +2283,7 @@
           state.hands[p.id].sort(() => Math.random() - 0.5);
         });
 
-        this.log(`Picks complete! Everyone holds 4 playing cards.`, 'win');
+        this.log(`Picks complete! The table is set with Joker and Trap hidden among players.`, 'win');
         state.phase = 'PASSING_ROUNDS';
         state.roundNumber = 1;
         this.renderJokerTrapPassingRound();
@@ -1904,31 +2295,90 @@
         const humanId = this.players[0].id;
         const humanHand = state.hands[humanId];
 
+        // Seating order: Human is at index 0. Neighbor to human's right is index n-1.
         const neighbor = this.players[n - 1];
         const neighborHand = state.hands[neighbor.id];
 
         let html = `
           <div class="arena-header">
             <div>
-              <h2>🃏 Exchange (${state.roundNumber}/3)</h2>
-              <p style="color:var(--text-muted); font-size:0.8rem;">Draw 1 card from <strong>${neighbor.name}</strong>!</p>
+              <h2>🃏 The Arena Table: Exchange (${state.roundNumber}/3)</h2>
+              <p style="color:var(--text-muted); font-size:0.8rem;">
+                Watch the radar signs! Draw 1 card from <strong>${neighbor.name}</strong> to your right.
+              </p>
             </div>
             ${this.getInGameAbilityBar()}
           </div>
 
-          <div style="background:#0f172a; padding:12px; border-radius:10px; margin: 6px 0;">
-            <h4 style="font-size:0.85rem; margin-bottom:8px;">Draw from <span style="color:${neighbor.color};">${neighbor.name}</span>:</h4>
-            <div class="cards-row">
-              ${neighborHand.map((_, idx) => `
-                <div class="mystery-card" style="width:54px; height:80px; font-size:1.1rem;" onclick="game.jokerTrapExecuteDraw(${idx})">
-                  🂠
-                </div>
-              `).join('')}
+          <!-- 3D POKER ARENA FELT TABLE -->
+          <div class="poker-table-wrapper">
+            <div class="poker-table-surface">
+              
+              <!-- Seated Contenders around the table -->
+              <div class="table-seats-grid">
+                ${this.players.map(p => {
+                  const isNeighbor = p.id === neighbor.id;
+                  const isYou = p.id === humanId;
+                  const pHand = state.hands[p.id];
+
+                  // Detect if Joker or Trap is here
+                  const hasJoker = pHand.some(c => c.type === 'JOKER');
+                  const hasTrap = pHand.some(c => c.type === 'TRAP');
+
+                  return `
+                    <div class="table-seat ${isNeighbor ? 'is-neighbor-draw' : ''}">
+                      <!-- RADAR SIGNS -->
+                      ${hasJoker ? `<div class="radar-sign joker-sign">👑 JOKER HERE</div>` : ''}
+                      ${hasTrap ? `<div class="radar-sign trap-sign">💀 TRAP HERE</div>` : ''}
+
+                      <div style="display:flex; align-items:center; justify-content:center; gap:6px; margin-top:2px;">
+                        <div style="width:24px; height:24px; border-radius:50%; border:2px solid ${p.color}; overflow:hidden;">
+                          ${getCharacterAvatarSVG(p.char.id, 24)}
+                        </div>
+                        <strong style="font-size:0.8rem; color:${p.color};">${isYou ? 'YOU' : p.name}</strong>
+                      </div>
+
+                      <div style="font-size:0.68rem; color:${isNeighbor ? '#38bdf8' : 'var(--text-muted)'}; margin-top:2px;">
+                        ${isNeighbor ? '➔ DRAWING FROM' : isYou ? 'Your Seat' : `${pHand.length} Cards`}
+                      </div>
+
+                      ${isNeighbor ? `
+                        <!-- DRAWABLE CARDS ON THE FELT -->
+                        <div class="cards-row" style="margin-top:6px; gap:4px;">
+                          ${neighborHand.map((_, idx) => `
+                            <div class="mystery-card" style="width:36px; height:52px; font-size:0.9rem;" onclick="game.jokerTrapExecuteDraw(${idx})">
+                              🂠
+                            </div>
+                          `).join('')}
+                        </div>
+                      ` : `
+                        <div style="display:flex; justify-content:center; gap:3px; margin-top:6px; font-size:0.75rem;">
+                          ${'🂠 '.repeat(pHand.length)}
+                        </div>
+                      `}
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+
+              <!-- Table Center -->
+              <div class="table-center-ring">
+                <span style="font-size:0.75rem; font-weight:800; color:#34d399; letter-spacing:1px;">ROUND ${state.roundNumber} OF 3</span>
+                <p style="font-size:0.8rem; color:#e2e8f0; margin-top:2px;">
+                  Tap a card in <strong style="color:#38bdf8;">${neighbor.name}'s</strong> hand to draw it!
+                </p>
+              </div>
+
             </div>
           </div>
 
-          <div style="background:#0f172a; padding:10px; border-radius:8px;">
-            <h4 style="margin-bottom:6px; font-size:0.85rem;">Your Hand (4 Cards):</h4>
+          <!-- HUMAN'S CURRENT HAND -->
+          <div style="background:#090e17; padding:12px; border-radius:12px; border:1px solid #1e293b;">
+            <h4 style="margin-bottom:6px; font-size:0.85rem; display:flex; justify-content:space-between;">
+              <span>Your Current Hand (4 Cards):</span>
+              ${humanHand.some(c => c.type === 'JOKER') ? `<span style="color:var(--gold); font-weight:900;">👑 YOU HOLD JOKER!</span>` : ''}
+              ${humanHand.some(c => c.type === 'TRAP') ? `<span style="color:var(--red); font-weight:900;">💀 YOU HOLD TRAP!</span>` : ''}
+            </h4>
             <div class="cards-row">
               ${humanHand.map(c => `
                 <div class="deck-playing-card ${c.type === 'JOKER' ? 'joker' : c.type === 'TRAP' ? 'trap' : c.isRed ? 'red' : ''}">
@@ -2013,7 +2463,7 @@
               const isWin = winners.includes(p.id);
               const isLose = losers.includes(p.id);
               return `
-                <div style="background:#0f172a; padding:8px; border-radius:6px; border:2px solid ${isWin ? 'var(--green)' : isLose ? 'var(--red)' : '#334155'}; font-size:0.8rem;">
+                <div style="background:#090e17; padding:8px; border-radius:8px; border:2px solid ${isWin ? 'var(--green)' : isLose ? 'var(--red)' : '#1e293b'}; font-size:0.8rem;">
                   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                     <strong style="color:${p.color};">${p.name}</strong>
                     <span style="font-weight:bold; color:${isWin ? 'var(--green)' : isLose ? 'var(--red)' : 'var(--text-muted)'}; font-size:0.75rem;">
@@ -2040,23 +2490,755 @@
       }
 
       /* ===================================================================
+         MINI-GAME 6: HIGH CARD: HIDDEN CHOICE
+         =================================================================== */
+      setupHighCardHidden() {
+        const n = this.players.length;
+        const totalCards = n * 5;
+        const pool = [];
+        for (let i = 1; i <= totalCards; i++) {
+          pool.push({ id: i, value: i, name: `#${i}` });
+        }
+        pool.sort(() => Math.random() - 0.5);
+
+        this.miniGameState = {
+          type: 'mg6',
+          phase: 'PICK_CARDS',
+          sharedPool: pool,
+          humanPicks: [],
+          playerHands: {},
+          playedHistory: [],
+          scores: {},
+          round: 1,
+          selectedCardToPlay: null
+        };
+        this.players.forEach(p => {
+          this.miniGameState.scores[p.id] = 0;
+          this.miniGameState.playerHands[p.id] = [];
+        });
+
+        this.renderHighCardPickPhase();
+      }
+
+      renderHighCardPickPhase() {
+        const state = this.miniGameState;
+        const needed = 5 - state.humanPicks.length;
+        let html = `
+          <div class="arena-header">
+            <div>
+              <h2>🂡 High Card: Hidden Choice</h2>
+              <p style="color:var(--text-muted); font-size:0.8rem;">
+                Step 1: Pick <strong>${needed}</strong> more face-down card${needed > 1 ? 's' : ''} for your 5-card secret hand!
+              </p>
+            </div>
+            ${this.getInGameAbilityBar()}
+          </div>
+
+          <div style="background:#090e17; padding:12px; border-radius:12px; margin: 8px 0;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:0.85rem; color:#cbd5e1;">Available Pool (${state.sharedPool.length} Cards)</span>
+              <span class="tag gold">${state.humanPicks.length}/5 Picked</span>
+            </div>
+            <div class="grid-pick" style="grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));">
+              ${state.sharedPool.map((c, idx) => `
+                <div class="mystery-card" style="aspect-ratio:2/3; font-size:0.9rem;" onclick="game.pickHighCardIndex(${idx})">
+                  🂠
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+        document.getElementById('arena-panel').innerHTML = html;
+      }
+
+      pickHighCardIndex(idx) {
+        const state = this.miniGameState;
+        if (state.humanPicks.length >= 5) return;
+        const picked = state.sharedPool.splice(idx, 1)[0];
+        state.humanPicks.push(picked);
+
+        if (state.humanPicks.length === 5) {
+          state.playerHands[this.players[0].id] = state.humanPicks.sort((a,b) => a.value - b.value);
+          this.players.filter(p => !p.isHuman).forEach(bot => {
+            const botHand = [];
+            for (let k = 0; k < 5; k++) {
+              botHand.push(state.sharedPool.pop());
+            }
+            state.playerHands[bot.id] = botHand.sort((a,b) => a.value - b.value);
+          });
+          state.phase = 'PLAY_ROUNDS';
+          state.round = 1;
+          this.log("All players received 5 cards! Round 1 begins.", "win");
+          this.renderHighCardPlayRound();
+        } else {
+          this.renderHighCardPickPhase();
+        }
+      }
+
+      renderHighCardPlayRound() {
+        const state = this.miniGameState;
+        const humanId = this.players[0].id;
+        const hand = state.playerHands[humanId];
+
+        let html = `
+          <div class="arena-header">
+            <div>
+              <h2>🂡 High Card: Round ${state.round}/5</h2>
+              <p style="color:var(--text-muted); font-size:0.8rem;">
+                Select 1 card to play. Highest = +3 pts, 2nd Highest = +1 pt, Lowest = -1 pt.
+              </p>
+            </div>
+            ${this.getInGameAbilityBar()}
+          </div>
+
+          <div style="background:#090e17; padding:12px; border-radius:12px; margin: 8px 0;">
+            <h4 style="margin-bottom:8px; font-size:0.9rem;">Your Remaining Hand:</h4>
+            <div class="cards-row">
+              ${hand.map((c, i) => `
+                <div class="deck-playing-card gold-card interactive ${state.selectedCardToPlay === i ? 'selected-play' : ''}" 
+                     onclick="game.selectCardToPlay(${i})">
+                  <div style="font-size:0.7rem;">CARD</div>
+                  <div style="font-size:1.6rem; font-weight:900; text-align:center;">${c.value}</div>
+                  <div style="font-size:0.7rem; text-align:right;">★</div>
+                </div>
+              `).join('')}
+            </div>
+
+            <div style="margin-top:14px;">
+              <button class="gold" style="width:100%;" ${state.selectedCardToPlay === null ? 'disabled' : ''} onclick="game.confirmPlayHighCard()">
+                ▶ Lock In & Play Card #${state.selectedCardToPlay !== null ? hand[state.selectedCardToPlay].value : '?'}
+              </button>
+            </div>
+          </div>
+
+          <div style="background:#090e17; padding:10px; border-radius:10px; font-size:0.8rem;">
+            <strong>Current Points Standings:</strong>
+            <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;">
+              ${this.players.map(p => `
+                <span style="color:${p.color};">${p.name}: <strong>${state.scores[p.id]} pts</strong></span>
+              `).join(' • ')}
+            </div>
+          </div>
+        `;
+        document.getElementById('arena-panel').innerHTML = html;
+      }
+
+      selectCardToPlay(idx) {
+        this.miniGameState.selectedCardToPlay = idx;
+        this.renderHighCardPlayRound();
+      }
+
+      confirmPlayHighCard() {
+        const state = this.miniGameState;
+        if (state.selectedCardToPlay === null) return;
+
+        const humanId = this.players[0].id;
+        const humanCard = state.playerHands[humanId].splice(state.selectedCardToPlay, 1)[0];
+        state.selectedCardToPlay = null;
+
+        const playedThisRound = [];
+        playedThisRound.push({ player: this.players[0], card: humanCard });
+
+        // Strategic Bot Decisions
+        this.players.filter(p => !p.isHuman).forEach(bot => {
+          const bHand = state.playerHands[bot.id];
+          let chosenIndex = 0;
+          const r = Math.random();
+          if (state.round <= 2) {
+            chosenIndex = r < 0.6 ? Math.floor(Math.random() * Math.min(2, bHand.length)) : bHand.length - 1;
+          } else if (state.round === 3 || state.round === 4) {
+            chosenIndex = Math.floor(Math.random() * bHand.length);
+          } else {
+            chosenIndex = 0;
+          }
+          if (chosenIndex >= bHand.length) chosenIndex = bHand.length - 1;
+          const botCard = bHand.splice(chosenIndex, 1)[0];
+          playedThisRound.push({ player: bot, card: botCard });
+        });
+
+        // Evaluate Round
+        const uniqueValues = [...new Set(playedThisRound.map(x => x.card.value))].sort((a,b) => b - a);
+        const highestVal = uniqueValues[0];
+        const secondHighestVal = uniqueValues.length > 1 ? uniqueValues[1] : null;
+        const lowestVal = uniqueValues[uniqueValues.length - 1];
+
+        const roundScores = {};
+        this.players.forEach(p => roundScores[p.id] = 0);
+
+        playedThisRound.forEach(entry => {
+          const v = entry.card.value;
+          if (v === highestVal) {
+            roundScores[entry.player.id] = 3;
+          } else if (v === secondHighestVal && v !== lowestVal) {
+            roundScores[entry.player.id] = 1;
+          } else if (v === lowestVal) {
+            roundScores[entry.player.id] = -1;
+          } else {
+            roundScores[entry.player.id] = 0;
+          }
+          state.scores[entry.player.id] += roundScores[entry.player.id];
+        });
+
+        state.playedHistory.push({
+          round: state.round,
+          played: playedThisRound,
+          roundScores: roundScores
+        });
+
+        let html = `
+          <div class="arena-header">
+            <h2>Round ${state.round} Results</h2>
+          </div>
+
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:8px; margin: 10px 0;">
+            ${playedThisRound.map(entry => {
+              const pts = roundScores[entry.player.id];
+              const sign = pts > 0 ? `+${pts}` : pts;
+              return `
+                <div style="background:#090e17; padding:8px; border-radius:8px; border:2px solid ${pts > 0 ? 'var(--green)' : pts < 0 ? 'var(--red)' : '#1e293b'}; font-size:0.85rem;">
+                  <div style="font-weight:bold; color:${entry.player.color};">${entry.player.name}</div>
+                  <div style="font-size:1.1rem; margin: 4px 0;">Card: <strong>${entry.card.value}</strong></div>
+                  <div style="font-weight:bold; color:${pts > 0 ? 'var(--green)' : pts < 0 ? 'var(--red)' : 'var(--text-muted)'}; font-size:0.75rem;">
+                    ${sign} pts
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+
+          <div style="margin-top:12px;">
+            ${state.round < 5 ? `
+              <button class="gold" style="width:100%;" onclick="game.nextHighCardRound()">Continue to Round ${state.round + 1}</button>
+            ` : `
+              <button class="success" style="width:100%;" onclick="game.finishHighCardGame()">View Final Standings</button>
+            `}
+          </div>
+        `;
+        document.getElementById('arena-panel').innerHTML = html;
+      }
+
+      nextHighCardRound() {
+        this.miniGameState.round++;
+        this.renderHighCardPlayRound();
+      }
+
+      finishHighCardGame() {
+        const state = this.miniGameState;
+        const standings = this.players.map(p => ({
+          player: p,
+          total: state.scores[p.id]
+        })).sort((a,b) => b.total - a.total);
+
+        const maxTotal = standings[0].total;
+        const minTotal = standings[standings.length - 1].total;
+
+        const winners = standings.filter(s => s.total === maxTotal).map(s => s.player.id);
+        const losers = standings.filter(s => s.total === minTotal).map(s => s.player.id);
+
+        this.setPendingResults(winners, losers, 1, 1);
+
+        let html = `
+          <div class="arena-header">
+            <h2>🂡 High Card: Final Standings</h2>
+          </div>
+
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:8px; margin: 12px 0;">
+            ${standings.map(s => `
+              <div style="background:#090e17; padding:8px; border-radius:8px; border:2px solid ${winners.includes(s.player.id) ? 'var(--green)' : losers.includes(s.player.id) ? 'var(--red)' : '#1e293b'}; font-size:0.85rem;">
+                <div style="font-weight:bold; color:${s.player.color};">${s.player.name}</div>
+                <div style="font-size:1.1rem; margin:2px 0;"><strong>${s.total}</strong> pts</div>
+                <div style="font-size:0.75rem;">
+                  ${winners.includes(s.player.id) ? '🏆 WINNER (+1)' : losers.includes(s.player.id) ? '❌ LOSER (-1)' : 'Stays'}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+
+          <button class="success" style="width:100%;" onclick="game.applyPendingResults()">Proceed to Board Updates</button>
+        `;
+        document.getElementById('arena-panel').innerHTML = html;
+      }
+
+      /* ===================================================================
+         MINI-GAME 7: GREEDY TREASURE
+         =================================================================== */
+      setupGreedyTreasure() {
+        this.miniGameState = {
+          type: 'mg7',
+          round: 1,
+          cumulativeCoins: {},
+          roundHistory: []
+        };
+        this.players.forEach(p => this.miniGameState.cumulativeCoins[p.id] = 0);
+        this.startGreedyTreasureRound();
+      }
+
+      startGreedyTreasureRound() {
+        const state = this.miniGameState;
+        const n = this.players.length;
+        const totalTreasure = (n * 16) + Math.floor(Math.random() * 12);
+        const budgetPerGroup = Math.floor(totalTreasure / 2);
+        const remainder = totalTreasure % 2;
+
+        const shuffled = [...this.players].sort(() => Math.random() - 0.5);
+        const half = Math.ceil(n / 2);
+        const groupA = shuffled.slice(0, half).map(p => p.id);
+        const groupB = shuffled.slice(half).map(p => p.id);
+
+        state.currentRoundData = {
+          totalTreasure,
+          budgetPerGroup,
+          remainder,
+          groupA,
+          groupB
+        };
+
+        this.renderGreedyTreasureInput();
+      }
+
+      renderGreedyTreasureInput() {
+        const state = this.miniGameState;
+        const roundData = state.currentRoundData;
+        const budget = roundData.budgetPerGroup;
+
+        let html = `
+          <div class="arena-header">
+            <div>
+              <h2>💰 Greedy Treasure (${state.round}/3)</h2>
+              <p style="color:var(--text-muted); font-size:0.8rem;">
+                Request coins secretly. If your hidden group's total exceeds the budget, everyone gets 0!
+              </p>
+            </div>
+            ${this.getInGameAbilityBar()}
+          </div>
+
+          <div style="background:#090e17; padding:16px; border-radius:12px; margin: 8px 0; text-align:center;">
+            <div style="font-size:0.85rem; color:#cbd5e1; margin-bottom:4px;">ANNOUNCED TREASURE POOL</div>
+            <div style="font-size:2rem; font-weight:900; color:var(--gold);">💎 ${roundData.totalTreasure} Coins</div>
+            <p style="color:var(--text-muted); font-size:0.8rem; margin-top:4px;">
+              Each hidden group has a budget of <strong>${budget} coins</strong>.
+              ${roundData.remainder > 0 ? `(${roundData.remainder} coin locked in vault)` : ''}
+            </p>
+
+            <div style="margin: 20px 0 10px 0; text-align:left;">
+              <label style="font-size:0.9rem; font-weight:700;">How many coins do you request? (0 – ${budget}):</label>
+              <div style="display:flex; gap:8px; margin-top:8px;">
+                <input type="number" id="treasure-bid-input" min="0" max="${budget}" value="${Math.floor(budget / 3)}" 
+                       style="background:#1e293b; border:2px solid var(--border); border-radius:8px; padding:10px; color:white; font-size:1.2rem; width:100px; text-align:center;" />
+                <button class="gold" style="flex:1;" onclick="game.submitGreedyBid()">Lock In Request</button>
+              </div>
+            </div>
+          </div>
+        `;
+        document.getElementById('arena-panel').innerHTML = html;
+      }
+
+      submitGreedyBid() {
+        const state = this.miniGameState;
+        const roundData = state.currentRoundData;
+        const budget = roundData.budgetPerGroup;
+        const inputEl = document.getElementById('treasure-bid-input');
+        let humanBid = parseInt(inputEl.value) || 0;
+        humanBid = Math.max(0, Math.min(budget, humanBid));
+
+        const bids = {};
+        bids[this.players[0].id] = humanBid;
+
+        this.players.filter(p => !p.isHuman).forEach(bot => {
+          const estimatedGroupSize = Math.max(2, Math.round(this.players.length / 2));
+          const fairShare = Math.floor(budget / estimatedGroupSize);
+          const greedFactor = 0.7 + (Math.random() * 0.65);
+          const bid = Math.min(budget, Math.max(1, Math.round(fairShare * greedFactor)));
+          bids[bot.id] = bid;
+        });
+
+        let sumA = 0;
+        roundData.groupA.forEach(id => sumA += bids[id]);
+        const successA = sumA <= budget;
+
+        let sumB = 0;
+        roundData.groupB.forEach(id => sumB += bids[id]);
+        const successB = sumB <= budget;
+
+        const roundEarnings = {};
+        this.players.forEach(p => {
+          const inA = roundData.groupA.includes(p.id);
+          const success = inA ? successA : successB;
+          const earned = success ? bids[p.id] : 0;
+          roundEarnings[p.id] = earned;
+          state.cumulativeCoins[p.id] += earned;
+        });
+
+        state.roundHistory.push({
+          round: state.round,
+          roundData,
+          bids,
+          sumA,
+          sumB,
+          successA,
+          successB,
+          roundEarnings
+        });
+
+        let html = `
+          <div class="arena-header">
+            <h2>💰 Round ${state.round} Treasure Results</h2>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin: 8px 0;">
+            <div style="background:#090e17; padding:10px; border-radius:10px; border:2px solid ${successA ? 'var(--green)' : 'var(--red)'}; text-align:center;">
+              <h4 style="color:#e2e8f0; font-size:0.9rem;">Group A</h4>
+              <div style="font-size:1.1rem; font-weight:800; margin:2px 0;">${sumA} / ${budget}</div>
+              <span class="tag ${successA ? 'green' : 'red'}">${successA ? '✅ SAFE (Paid Out)' : '❌ BUSTED (0 Paid)'}</span>
+            </div>
+
+            <div style="background:#090e17; padding:10px; border-radius:10px; border:2px solid ${successB ? 'var(--green)' : 'var(--red)'}; text-align:center;">
+              <h4 style="color:#e2e8f0; font-size:0.9rem;">Group B</h4>
+              <div style="font-size:1.1rem; font-weight:800; margin:2px 0;">${sumB} / ${budget}</div>
+              <span class="tag ${successB ? 'green' : 'red'}">${successB ? '✅ SAFE (Paid Out)' : '❌ BUSTED (0 Paid)'}</span>
+            </div>
+          </div>
+
+          <h4 style="margin-top:8px; font-size:0.85rem; color:var(--text-muted);">Player Earnings & Standings:</h4>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:6px; margin-bottom:12px;">
+            ${this.players.map(p => {
+              const earned = roundEarnings[p.id];
+              return `
+                <div style="background:#090e17; padding:6px 8px; border-radius:8px; border:1px solid #1e293b; font-size:0.8rem;">
+                  <strong style="color:${p.color};">${p.name}</strong>
+                  <div>Requested: ${bids[p.id]} 🪙</div>
+                  <div style="color:${earned > 0 ? 'var(--green)' : 'var(--red)'}; font-weight:bold;">
+                    Earned: +${earned}
+                  </div>
+                  <div style="font-size:0.75rem; color:var(--gold); margin-top:2px;">Total: ${state.cumulativeCoins[p.id]} 🪙</div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+
+          <div style="margin-top:10px;">
+            ${state.round < 3 ? `
+              <button class="gold" style="width:100%;" onclick="game.nextGreedyRound()">Next Round (${state.round + 1}/3)</button>
+            ` : `
+              <button class="success" style="width:100%;" onclick="game.finishGreedyGame()">View Final Results</button>
+            `}
+          </div>
+        `;
+        document.getElementById('arena-panel').innerHTML = html;
+      }
+
+      nextGreedyRound() {
+        this.miniGameState.round++;
+        this.startGreedyTreasureRound();
+      }
+
+      finishGreedyGame() {
+        const state = this.miniGameState;
+        const sorted = this.players.map(p => ({
+          player: p,
+          total: state.cumulativeCoins[p.id]
+        })).sort((a,b) => b.total - a.total);
+
+        const maxTotal = sorted[0].total;
+        const minTotal = sorted[sorted.length - 1].total;
+
+        const winners = sorted.filter(s => s.total === maxTotal).map(s => s.player.id);
+        const losers = sorted.filter(s => s.total === minTotal).map(s => s.player.id);
+
+        this.setPendingResults(winners, losers, 1, 1);
+
+        let html = `
+          <div class="arena-header">
+            <h2>💰 Final Treasure Standings</h2>
+          </div>
+
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:8px; margin: 12px 0;">
+            ${sorted.map(s => `
+              <div style="background:#090e17; padding:8px; border-radius:8px; border:2px solid ${winners.includes(s.player.id) ? 'var(--green)' : losers.includes(s.player.id) ? 'var(--red)' : '#1e293b'}; font-size:0.85rem;">
+                <div style="font-weight:bold; color:${s.player.color};">${s.player.name}</div>
+                <div style="font-size:1.15rem; color:var(--gold); margin:2px 0;"><strong>${s.total}</strong> 🪙</div>
+                <div style="font-size:0.75rem;">
+                  ${winners.includes(s.player.id) ? '🏆 WINNER (+1)' : losers.includes(s.player.id) ? '❌ LOSER (-1)' : 'Stays'}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+
+          <button class="success" style="width:100%;" onclick="game.applyPendingResults()">Proceed to Board Updates</button>
+        `;
+        document.getElementById('arena-panel').innerHTML = html;
+      }
+
+      /* ===================================================================
+         MINI-GAME 8: MEMORY HUNT (10 CARDS)
+         =================================================================== */
+      setupMemoryHunt() {
+        const deck10 = [
+          { id: 1, rank: 'A', suit: '♠', isRed: false },
+          { id: 2, rank: 'K', suit: '♥', isRed: true },
+          { id: 3, rank: 'Q', suit: '♦', isRed: true },
+          { id: 4, rank: 'J', suit: '♣', isRed: false },
+          { id: 5, rank: '10', suit: '♠', isRed: false },
+          { id: 6, rank: '9', suit: '♥', isRed: true },
+          { id: 7, rank: '8', suit: '♦', isRed: true },
+          { id: 8, rank: '7', suit: '♣', isRed: false },
+          { id: 9, rank: '6', suit: '♠', isRed: false },
+          { id: 10, rank: '5', suit: '♥', isRed: true }
+        ];
+        const targetOrder = [...deck10].sort(() => Math.random() - 0.5);
+
+        this.miniGameState = {
+          type: 'mg8',
+          phase: 'MEMORIZE',
+          targetOrder: targetOrder,
+          humanSlots: new Array(10).fill(null),
+          unplacedCards: [...deck10].sort(() => Math.random() - 0.5),
+          countdown: 5,
+          decisionTimer: 30
+        };
+
+        this.renderMemoryHuntMemorize();
+      }
+
+      renderMemoryHuntMemorize() {
+        const state = this.miniGameState;
+        let html = `
+          <div class="arena-header">
+            <div>
+              <h2>🧠 Memory Hunt: Memorize!</h2>
+              <p style="color:var(--text-muted); font-size:0.8rem;">Memorize the exact order of all 10 cards!</p>
+            </div>
+            ${this.getInGameAbilityBar()}
+          </div>
+
+          <div style="background:#090e17; padding:12px; border-radius:12px; margin: 8px 0; text-align:center;">
+            <div style="font-size:1.6rem; font-weight:bold; color:var(--gold); margin-bottom:10px;">
+              ⏳ Memorize Time: <span id="mem-count">${state.countdown}</span>s
+            </div>
+
+            <div class="memory-slots-grid">
+              ${state.targetOrder.map((c, i) => `
+                <div class="deck-playing-card ${c.isRed ? 'red' : ''}" style="width:auto; height:74px;">
+                  <div style="font-size:0.6rem; color:var(--text-muted); font-weight:normal;">#${i + 1}</div>
+                  <div style="font-size:1.1rem; text-align:center;">${c.rank} ${c.suit}</div>
+                  <div style="font-size:0.6rem; text-align:right;">#${i + 1}</div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+        document.getElementById('arena-panel').innerHTML = html;
+
+        const interval = setInterval(() => {
+          state.countdown--;
+          const el = document.getElementById('mem-count');
+          if (el) el.innerText = state.countdown;
+
+          if (state.countdown <= 0) {
+            clearInterval(interval);
+            state.phase = 'RECONSTRUCT';
+            this.startMemoryHuntReconstruct();
+          }
+        }, 1000);
+        this.addTimer(interval);
+      }
+
+      startMemoryHuntReconstruct() {
+        const state = this.miniGameState;
+        this.renderMemoryHuntReconstruct();
+
+        const decisionInterval = setInterval(() => {
+          state.decisionTimer--;
+          const timerEl = document.getElementById('decision-timer');
+          if (timerEl) timerEl.innerText = state.decisionTimer;
+
+          if (state.decisionTimer <= 0) {
+            clearInterval(decisionInterval);
+            this.submitMemoryHuntArrangement();
+          }
+        }, 1000);
+        this.addTimer(decisionInterval);
+      }
+
+      renderMemoryHuntReconstruct() {
+        const state = this.miniGameState;
+
+        let html = `
+          <div class="arena-header">
+            <div>
+              <h2>🧠 Reconstruct Arrangement</h2>
+              <p style="color:var(--text-muted); font-size:0.8rem;">
+                Time remaining: <strong id="decision-timer" style="color:var(--gold); font-size:1rem;">${state.decisionTimer}</strong>s
+              </p>
+            </div>
+            ${this.getInGameAbilityBar()}
+          </div>
+
+          <div style="background:#090e17; padding:12px; border-radius:12px; margin: 8px 0;">
+            <h4 style="font-size:0.85rem; color:#cbd5e1; margin-bottom:6px;">Target Slots (Tap placed card to remove):</h4>
+            <div class="memory-slots-grid">
+              ${state.humanSlots.map((card, idx) => `
+                <div class="memory-slot ${card ? 'filled' : ''}" onclick="game.removeMemorySlotCard(${idx})">
+                  ${card ? `
+                    <div class="deck-playing-card ${card.isRed ? 'red' : ''}" style="width:100%; height:100%;">
+                      <div style="font-size:0.6rem;">#${idx + 1}</div>
+                      <div style="font-size:1.1rem; text-align:center;">${card.rank} ${card.suit}</div>
+                      <div style="font-size:0.6rem; text-align:right;">#${idx + 1}</div>
+                    </div>
+                  ` : `
+                    <span style="color:#64748b; font-size:0.85rem; font-weight:bold;">#${idx + 1}</span>
+                  `}
+                </div>
+              `).join('')}
+            </div>
+
+            <h4 style="font-size:0.85rem; color:#cbd5e1; margin:10px 0 6px 0;">Available Cards (Tap to place into next open slot):</h4>
+            <div class="cards-row" style="min-height:76px;">
+              ${state.unplacedCards.map((card, idx) => `
+                <div class="deck-playing-card ${card.isRed ? 'red' : ''} interactive" style="width:48px; height:70px;" 
+                     onclick="game.placeMemoryCard(${idx})">
+                  <div>${card.rank}</div>
+                  <div style="font-size:1.1rem; text-align:center;">${card.suit}</div>
+                  <div style="text-align:right;">${card.rank}</div>
+                </div>
+              `).join('')}
+            </div>
+
+            <div style="display:flex; gap:8px; margin-top:14px;">
+              <button class="secondary" style="flex:1;" onclick="game.clearAllMemorySlots()">Clear Slots</button>
+              <button class="success" style="flex:1;" onclick="game.submitMemoryHuntArrangement()">Submit Arrangement</button>
+            </div>
+          </div>
+        `;
+        document.getElementById('arena-panel').innerHTML = html;
+      }
+
+      placeMemoryCard(unplacedIdx) {
+        const state = this.miniGameState;
+        const emptySlotIdx = state.humanSlots.findIndex(s => s === null);
+        if (emptySlotIdx === -1) return;
+
+        const card = state.unplacedCards.splice(unplacedIdx, 1)[0];
+        state.humanSlots[emptySlotIdx] = card;
+        this.renderMemoryHuntReconstruct();
+      }
+
+      removeMemorySlotCard(slotIdx) {
+        const state = this.miniGameState;
+        if (!state.humanSlots[slotIdx]) return;
+        const card = state.humanSlots[slotIdx];
+        state.humanSlots[slotIdx] = null;
+        state.unplacedCards.push(card);
+        this.renderMemoryHuntReconstruct();
+      }
+
+      clearAllMemorySlots() {
+        const state = this.miniGameState;
+        state.humanSlots.forEach(card => {
+          if (card) state.unplacedCards.push(card);
+        });
+        state.humanSlots = new Array(10).fill(null);
+        this.renderMemoryHuntReconstruct();
+      }
+
+      submitMemoryHuntArrangement() {
+        this.clearActiveTimers();
+        const state = this.miniGameState;
+
+        for (let i = 0; i < 10; i++) {
+          if (state.humanSlots[i] === null && state.unplacedCards.length > 0) {
+            state.humanSlots[i] = state.unplacedCards.pop();
+          }
+        }
+
+        let humanScore = 0;
+        state.humanSlots.forEach((c, idx) => {
+          if (c && c.id === state.targetOrder[idx].id) humanScore++;
+        });
+
+        const playerScores = {};
+        playerScores[this.players[0].id] = humanScore;
+
+        this.players.filter(p => !p.isHuman).forEach(bot => {
+          const memoryAccuracy = 3 + Math.floor(Math.random() * 6);
+          playerScores[bot.id] = memoryAccuracy;
+        });
+
+        const sorted = this.players.map(p => ({
+          player: p,
+          score: playerScores[p.id]
+        })).sort((a,b) => b.score - a.score);
+
+        const maxScore = sorted[0].score;
+        const minScore = sorted[sorted.length - 1].score;
+
+        const winners = sorted.filter(s => s.score === maxScore).map(s => s.player.id);
+        const losers = sorted.filter(s => s.score === minScore).map(s => s.player.id);
+
+        this.setPendingResults(winners, losers, 1, 1);
+
+        let html = `
+          <div class="arena-header">
+            <h2>🧠 Memory Hunt: Results</h2>
+          </div>
+
+          <div style="background:#090e17; padding:12px; border-radius:12px; margin: 8px 0;">
+            <h4 style="margin-bottom:6px; font-size:0.9rem;">Your Reconstructed Arrangement (Score: <span style="color:var(--gold); font-size:1.25rem;">${humanScore}/10</span>):</h4>
+            <div class="memory-slots-grid">
+              ${state.humanSlots.map((c, idx) => {
+                const isCorrect = c && c.id === state.targetOrder[idx].id;
+                return `
+                  <div class="memory-slot ${isCorrect ? 'correct' : 'wrong'}">
+                    <div class="deck-playing-card ${c.isRed ? 'red' : ''}" style="width:100%; height:100%;">
+                      <div style="font-size:0.6rem; display:flex; justify-content:space-between;">
+                        <span>#${idx + 1}</span>
+                        <span style="font-weight:900;">${isCorrect ? '✓' : '✗'}</span>
+                      </div>
+                      <div style="font-size:1.1rem; text-align:center;">${c.rank} ${c.suit}</div>
+                      <div style="font-size:0.6rem; text-align:right;">#${idx + 1}</div>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+
+          <h4 style="margin-top:8px; font-size:0.85rem; color:var(--text-muted);">Scores & Movement:</h4>
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:6px; margin: 8px 0 12px 0;">
+            ${sorted.map(s => `
+              <div style="background:#090e17; padding:8px; border-radius:8px; border:2px solid ${winners.includes(s.player.id) ? 'var(--green)' : losers.includes(s.player.id) ? 'var(--red)' : '#1e293b'}; font-size:0.85rem;">
+                <div style="font-weight:bold; color:${s.player.color};">${s.player.name}</div>
+                <div>Score: <strong>${s.score}/10</strong></div>
+                <div style="font-size:0.75rem;">
+                  ${winners.includes(s.player.id) ? '🏆 WINNER (+1)' : losers.includes(s.player.id) ? '❌ LOSER (-1)' : 'Stays'}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+
+          <button class="success" style="width:100%;" onclick="game.applyPendingResults()">Proceed to Board Updates</button>
+        `;
+        document.getElementById('arena-panel').innerHTML = html;
+      }
+
+      /* ===================================================================
          MODALS & INTERFACES
          ===================================================================== */
-      promptLuckyOneChoice(player, c1, c2) {
+      promptLuckyOneChoice(player, c1, c2, stolenCardItems = null) {
         const modal = document.getElementById('modal-container');
         modal.innerHTML = `
           <div class="modal-overlay">
             <div class="modal">
               <h2>🍀 The Lucky One: Choose 1</h2>
               <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px;">
-                <div class="card-presentation ${c1.tier}" onclick="game.finishLuckyOne('${c1.id}', '${c2.id}')">
+                <div class="card-presentation ${c1.tier}" onclick="game.finishLuckyOne('${c1.id}', '${c2.id}', ${JSON.stringify(stolenCardItems || []).replace(/"/g, '&quot;')})">
                   ${getSpecialCardArtSVG(c1.id, 46)}
                   <h4 style="margin:4px 0; font-size:0.95rem;">${c1.name}</h4>
                   <span class="tag gold">${c1.tier}</span>
                   <p style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">${c1.desc}</p>
                   <button class="gold" style="margin-top:8px; width:100%; min-height:36px;">Select</button>
                 </div>
-                <div class="card-presentation ${c2.tier}" onclick="game.finishLuckyOne('${c2.id}', '${c1.id}')">
+                <div class="card-presentation ${c2.tier}" onclick="game.finishLuckyOne('${c2.id}', '${c1.id}', ${JSON.stringify(stolenCardItems || []).replace(/"/g, '&quot;')})">
                   ${getSpecialCardArtSVG(c2.id, 46)}
                   <h4 style="margin:4px 0; font-size:0.95rem;">${c2.name}</h4>
                   <span class="tag gold">${c2.tier}</span>
@@ -2069,12 +3251,21 @@
         `;
       }
 
-      finishLuckyOne(chosenId, discardedId) {
+      finishLuckyOne(chosenId, discardedId, stolenCardItems) {
         document.getElementById('modal-container').innerHTML = '';
         const chosen = CARD_TEMPLATES.find(c => c.id === chosenId);
         const discarded = CARD_TEMPLATES.find(c => c.id === discardedId);
         if (discarded) this.returnCardToBottom(discarded);
-        if (chosen) this.giveCardToPlayer(this.players[0], chosen);
+        if (chosen) this.giveCardToPlayer(this.players[0], chosen, false);
+
+        if (stolenCardItems && stolenCardItems.length > 0) {
+          stolenCardItems.forEach(item => {
+            this.giveCardToPlayer(this.players[0], item.card, false);
+          });
+          this.showThiefDoubleCardRewardModal(chosen, stolenCardItems);
+        } else {
+          this.showCardDrawnPresentationModal(chosen);
+        }
       }
 
       promptMagicianChoice(player, card) {
@@ -2121,7 +3312,9 @@
               <div style="display:flex; flex-direction:column; gap:6px; margin: 12px 0;">
                 ${others.map(o => `
                   <button style="padding:8px; text-align:left; display:flex; align-items:center; gap:8px; justify-content:flex-start;" onclick="game.executeTargetCallback(${o.id})">
-                    ${getCharacterAvatarSVG(o.char.id, 24)}
+                    <div style="width:28px; height:28px; border-radius:50%; border:2px solid ${o.color}; overflow:hidden;">
+                      ${getCharacterAvatarSVG(o.char.id, 28)}
+                    </div>
                     <div>
                       <strong style="color:${o.color}">${o.name}</strong> (${o.char.name}) — Space ${o.pos}/${this.maxPos}
                     </div>
@@ -2148,10 +3341,12 @@
           <div class="modal-overlay">
             <div class="modal" style="text-align:center;">
               <h1 style="color:var(--gold); font-size:2.2rem; margin-bottom:4px;">🏆 VICTORY! 🏆</h1>
-              <div style="margin: 8px auto;">${getCharacterAvatarSVG(winner.char.id, 56)}</div>
+              <div style="margin: 8px auto; width:64px; height:64px; border-radius:50%; border:3px solid var(--gold); overflow:hidden;">
+                ${getCharacterAvatarSVG(winner.char.id, 64)}
+              </div>
               <h2 style="color:${winner.color};">${winner.name} Reached Space ${this.maxPos}!</h2>
               <p style="margin:6px 0; color:var(--text-muted); font-size:0.85rem;">Character: ${winner.char.name}</p>
-              <div style="background:#0f172a; padding:10px; border-radius:8px; margin:12px 0; text-align:left; font-size:0.8rem;">
+              <div style="background:#090e17; padding:10px; border-radius:10px; margin:12px 0; text-align:left; font-size:0.8rem;">
                 <strong>Standings:</strong>
                 <ol style="margin-left:18px; margin-top:4px;">
                   ${[...this.players].sort((a,b) => b.pos - a.pos).map(p => `
@@ -2159,13 +3354,14 @@
                   `).join('')}
                 </ol>
               </div>
-              <button class="gold" style="width:100%;" onclick="game.resetPrompt()">Play Again</button>
+              <button class="gold" style="width:100%; font-size:1.05rem;" onclick="game.resetPrompt()">Play Again</button>
             </div>
           </div>
         `;
       }
 
       resetPrompt() {
+        this.clearActiveTimers();
         localStorage.removeItem('board_game_ai_save');
         this.pendingResults = null;
         this.resolvingRound = false;
@@ -2182,6 +3378,7 @@
               <div style="text-align:left; margin-bottom:12px;">
                 <label style="font-size:0.8rem; font-weight:700; color:#cbd5e1;">TOTAL PLAYERS</label>
                 <div class="segmented-control">
+                  <button type="button" id="btn-p4" class="segmented-btn" onclick="game.setSetupPlayerCount(4)">4 Players</button>
                   <button type="button" id="btn-p6" class="segmented-btn active" onclick="game.setSetupPlayerCount(6)">6 Players</button>
                   <button type="button" id="btn-p8" class="segmented-btn" onclick="game.setSetupPlayerCount(8)">8 Players</button>
                 </div>
@@ -2197,7 +3394,7 @@
               </div>
 
               <button class="success" style="width:100%; font-size:1.1rem; padding:12px;" onclick="game.confirmStartNewGame()">
-                🚀 Start Game
+                🚀 Launch Arena
               </button>
             </div>
           </div>
@@ -2206,8 +3403,10 @@
 
       setSetupPlayerCount(cnt) {
         this.selectedPlayerCount = cnt;
-        document.getElementById('btn-p6').classList.toggle('active', cnt === 6);
-        document.getElementById('btn-p8').classList.toggle('active', cnt === 8);
+        ['p4', 'p6', 'p8'].forEach(p => {
+          const btn = document.getElementById(`btn-${p}`);
+          if (btn) btn.classList.toggle('active', cnt === parseInt(p.substring(1)));
+        });
       }
 
       setSetupBoardLength(len) {
@@ -2222,7 +3421,7 @@
       }
 
       /* ===================================================================
-         RENDERING
+         RENDERING: DELUXE FIGURINES & BOARD
          ===================================================================== */
       renderAll() {
         this.renderBoard();
@@ -2250,8 +3449,11 @@
             </div>
             <div class="tile-occupants">
               ${occupants.map(p => `
-                <div class="avatar-token" style="background:${p.color}" title="${p.name}">
-                  ${p.isHuman ? 'U' : p.name.charAt(4)}
+                <div class="avatar-token ${p.isHuman ? 'is-human-token' : ''}" 
+                     style="border-color:${p.color};" 
+                     title="${p.name} (${p.char.name})">
+                  ${p.isHuman ? '<span class="token-label-you">YOU</span>' : ''}
+                  ${getCharacterAvatarSVG(p.char.id, 24)}
                 </div>
               `).join('')}
             </div>
@@ -2266,17 +3468,17 @@
           <div class="player-card ${p.isHuman ? 'is-human' : ''}">
             <div class="player-header">
               <div class="player-info">
-                <div class="avatar-frame">
-                  ${getCharacterAvatarSVG(p.char.id, 28)}
+                <div class="avatar-frame" style="border-color:${p.color};">
+                  ${getCharacterAvatarSVG(p.char.id, 40)}
                 </div>
                 <div>
-                  <strong style="color:${p.color}; font-size:0.9rem;">${p.name}</strong>
-                  <div style="font-size:0.7rem; color:#cbd5e1;">${p.char.name}</div>
+                  <strong style="color:${p.color}; font-size:0.95rem;">${p.name}</strong>
+                  <div style="font-size:0.75rem; color:#cbd5e1; font-weight:600;">${p.char.name}</div>
                 </div>
               </div>
-              <span style="font-weight:800; font-size:1.05rem; color:var(--gold);">${p.pos}/${this.maxPos}</span>
+              <span style="font-weight:900; font-size:1.15rem; color:var(--gold);">${p.pos}/${this.maxPos}</span>
             </div>
-            <div style="font-size:0.7rem; color:var(--text-muted); line-height:1.3;">
+            <div style="font-size:0.72rem; color:var(--text-muted); line-height:1.35;">
               ${p.char.desc}
             </div>
             <div class="status-tags">
