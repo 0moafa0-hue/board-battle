@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>Board Battle: AI Arena</title>
-  <!-- PeerJS with WebRTC STUN Support -->
+  <!-- PeerJS WebRTC Library -->
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
   <style>
     :root {
@@ -14,6 +14,7 @@
       --border: #233554;
       --accent: #6366f1;
       --gold: #f59e0b;
+      --gold-glow: rgba(245, 158, 11, 0.45);
       --red: #ef4444;
       --green: #10b981;
       --purple: #a855f7;
@@ -122,7 +123,7 @@
     }
     .mystery-card.revealed { background: #0f172a; border-color: var(--accent); }
     .card-presentation { background: #090e17; border: 3px solid; border-radius: 14px; padding: 16px; text-align: center; margin: 12px 0; }
-    .card-presentation.Legendary { border-color: var(--gold); }
+    .card-presentation.Legendary { border-color: var(--gold); box-shadow: 0 0 16px var(--gold-glow); }
     .card-presentation.Rare { border-color: var(--purple); }
     .card-presentation.Good { border-color: var(--green); }
     .card-presentation.Bad { border-color: var(--red); }
@@ -446,7 +447,7 @@
       clearLogs() { this.logs = []; this.renderLogs(); }
 
       /* =====================================================================
-         MULTIPLAYER LOBBY (FIXED WEBRTC SYNC)
+         MULTIPLAYER LOBBY & HOST SETTINGS FLOW
          ===================================================================== */
       resetPrompt() {
         this.clearActiveTimers();
@@ -510,17 +511,13 @@
           <div class="modal-overlay">
             <div class="modal" style="text-align:center;">
               <h2 style="font-size:1.5rem; color:#38bdf8; margin-bottom:4px;">🌐 Online Multiplayer</h2>
-              <div style="margin:12px 0; text-align:left;">
-                <label style="font-size:0.8rem; font-weight:700;">YOUR NAME:</label>
-                <input type="text" id="online-player-name" value="${this.myPlayerName !== 'You' ? this.myPlayerName : 'Player_' + Math.floor(Math.random()*900 + 100)}" 
-                       style="width:100%; background:#090e17; border:2px solid var(--border); border-radius:10px; padding:10px; color:white; font-size:1rem; margin-top:4px;" />
-              </div>
+              <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:14px;">Select an option below:</p>
               <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
                 <button class="gold" style="padding:14px 6px; flex-direction:column;" onclick="game.showCreateRoomSettings()">
-                  <span style="font-size:1.6rem;">🏠</span><strong>Create Room</strong>
+                  <span style="font-size:1.6rem;">🏠</span><strong>Create Room</strong><span style="font-size:0.75rem;">Set rules & host</span>
                 </button>
                 <button class="success" style="padding:14px 6px; flex-direction:column;" onclick="game.showJoinRoomModal()">
-                  <span style="font-size:1.6rem;">🔑</span><strong>Join Room</strong>
+                  <span style="font-size:1.6rem;">🔑</span><strong>Join Room</strong><span style="font-size:0.75rem;">Enter with code</span>
                 </button>
               </div>
               <button class="secondary" style="width:100%;" onclick="game.resetPrompt()">Back</button>
@@ -530,7 +527,48 @@
       }
 
       showCreateRoomSettings() {
-        const nameInput = document.getElementById('online-player-name');
+        const modal = document.getElementById('modal-container');
+        modal.innerHTML = `
+          <div class="modal-overlay">
+            <div class="modal" style="text-align:center;">
+              <h2 style="font-size:1.5rem; color:var(--gold); margin-bottom:4px;">🏠 Create Room Settings</h2>
+              <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:14px;">Decide your room options first:</p>
+              
+              <div style="margin-bottom:12px; text-align:left;">
+                <label style="font-size:0.8rem; font-weight:700;">YOUR HOST NAME:</label>
+                <input type="text" id="host-name-input" value="${this.myPlayerName !== 'You' ? this.myPlayerName : 'Host_' + Math.floor(Math.random()*900 + 100)}" 
+                       style="width:100%; background:#090e17; border:2px solid var(--border); border-radius:10px; padding:10px; color:white; font-size:1rem; margin-top:4px;" />
+              </div>
+
+              <div style="text-align:left; margin-bottom:12px;">
+                <label style="font-size:0.8rem; font-weight:700;">TOTAL CONTENDERS</label>
+                <div class="segmented-control">
+                  <button type="button" id="btn-p4" class="segmented-btn" onclick="game.setSetupPlayerCount(4)">4 Players</button>
+                  <button type="button" id="btn-p6" class="segmented-btn active" onclick="game.setSetupPlayerCount(6)">6 Players</button>
+                  <button type="button" id="btn-p8" class="segmented-btn" onclick="game.setSetupPlayerCount(8)">8 Players</button>
+                </div>
+              </div>
+
+              <div style="text-align:left; margin-bottom:18px;">
+                <label style="font-size:0.8rem; font-weight:700;">BOARD LENGTH</label>
+                <div class="segmented-control">
+                  <button type="button" id="btn-b10" class="segmented-btn" onclick="game.setSetupBoardLength(10)">10 (Cards: 4, 7)</button>
+                  <button type="button" id="btn-b15" class="segmented-btn active" onclick="game.setSetupBoardLength(15)">15 (Cards: 5, 10)</button>
+                  <button type="button" id="btn-b20" class="segmented-btn" onclick="game.setSetupBoardLength(20)">20 (Cards: 5, 10, 15)</button>
+                </div>
+              </div>
+
+              <button class="gold" style="width:100%; font-size:1.05rem; padding:12px;" onclick="game.confirmAndCreateHostRoom()">
+                ✨ Confirm & Generate Room Code
+              </button>
+              <button class="secondary" style="width:100%; margin-top:8px;" onclick="game.showOnlineMenu()">Back</button>
+            </div>
+          </div>
+        `;
+      }
+
+      confirmAndCreateHostRoom() {
+        const nameInput = document.getElementById('host-name-input');
         if (nameInput) this.myPlayerName = nameInput.value.trim() || 'Host';
         this.isOnline = true;
         this.isHost = true;
@@ -542,7 +580,7 @@
         if (this.peer) this.peer.destroy();
 
         // Standard STUN servers for cross-network connectivity
-        this.peer = new Peer(`bb-room-${this.roomCode}`, {
+        this.peer = new Peer(`bb-arena-${this.roomCode}`, {
           config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:global.stun.twilio.com:3478' }] }
         });
         this.peersList = [];
@@ -568,7 +606,7 @@
         modal.innerHTML = `
           <div class="modal-overlay">
             <div class="modal" style="text-align:center;">
-              <span class="tag gold">ROOM CODE</span>
+              <span class="tag gold">ROOM CREATED</span>
               <h2 style="font-size:2.2rem; margin-top:6px; letter-spacing:3px; color:var(--gold);">${this.roomCode}</h2>
               <p style="color:var(--text-muted); font-size:0.8rem; margin:4px 0 14px;">Share this code with players to join.</p>
               <div style="background:#090e17; border:1px solid var(--border); border-radius:12px; padding:12px; margin-bottom:14px; text-align:left;">
@@ -602,15 +640,18 @@
       }
 
       showJoinRoomModal() {
-        const nameInput = document.getElementById('online-player-name');
-        if (nameInput) this.myPlayerName = nameInput.value.trim() || 'Guest';
         const modal = document.getElementById('modal-container');
         modal.innerHTML = `
           <div class="modal-overlay">
             <div class="modal" style="text-align:center;">
               <h2 style="font-size:1.5rem; color:#38bdf8; margin-bottom:4px;">🔑 Join Room</h2>
+              <div style="margin:10px 0; text-align:left;">
+                <label style="font-size:0.8rem; font-weight:700;">YOUR NAME:</label>
+                <input type="text" id="join-name-input" value="${this.myPlayerName !== 'You' ? this.myPlayerName : 'Player_' + Math.floor(Math.random()*900 + 100)}" 
+                       style="width:100%; background:#090e17; border:2px solid var(--border); border-radius:10px; padding:10px; color:white; font-size:1rem; margin-top:4px;" />
+              </div>
               <input type="text" id="join-code-input" maxlength="6" inputmode="numeric" placeholder="6-digit code"
-                     style="width:100%; background:#090e17; border:2px solid var(--border); border-radius:12px; padding:12px; color:white; font-size:1.5rem; text-align:center; letter-spacing:5px; margin: 14px 0;" />
+                     style="width:100%; background:#090e17; border:2px solid var(--border); border-radius:12px; padding:12px; color:white; font-size:1.5rem; text-align:center; letter-spacing:5px; margin: 10px 0;" />
               <div id="join-status-banner" style="display:none; color:var(--gold); font-size:0.85rem; margin-bottom:10px;">Connecting to room...</div>
               <button class="success" style="width:100%; font-size:1.05rem;" onclick="game.connectToRoom()">Enter Room</button>
               <button class="secondary" style="width:100%; margin-top:8px;" onclick="game.showOnlineMenu()">Back</button>
@@ -621,6 +662,8 @@
 
       connectToRoom() {
         const code = document.getElementById('join-code-input').value.trim();
+        const nameInput = document.getElementById('join-name-input');
+        if (nameInput) this.myPlayerName = nameInput.value.trim() || 'Guest';
         if (code.length < 6) return alert("Enter valid 6-digit code.");
         document.getElementById('join-status-banner').style.display = 'block';
 
@@ -636,7 +679,7 @@
         });
 
         this.peer.on('open', () => {
-          this.hostConn = this.peer.connect(`bb-room-${code}`);
+          this.hostConn = this.peer.connect(`bb-arena-${code}`);
           this.hostConn.on('open', () => {
             this.hostConn.send({ type: 'JOIN_LOBBY', name: this.myPlayerName });
             this.renderClientLobby([{ name: this.myPlayerName, isHost: false }]);
