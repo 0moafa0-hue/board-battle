@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>Board Battle: AI Arena</title>
-  <!-- PeerJS for Client-to-Client WebRTC Rooms -->
+  <!-- PeerJS with WebRTC STUN Support -->
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
   <style>
     :root {
@@ -14,7 +14,6 @@
       --border: #233554;
       --accent: #6366f1;
       --gold: #f59e0b;
-      --gold-glow: rgba(245, 158, 11, 0.45);
       --red: #ef4444;
       --green: #10b981;
       --purple: #a855f7;
@@ -123,7 +122,7 @@
     }
     .mystery-card.revealed { background: #0f172a; border-color: var(--accent); }
     .card-presentation { background: #090e17; border: 3px solid; border-radius: 14px; padding: 16px; text-align: center; margin: 12px 0; }
-    .card-presentation.Legendary { border-color: var(--gold); box-shadow: 0 0 16px var(--gold-glow); }
+    .card-presentation.Legendary { border-color: var(--gold); }
     .card-presentation.Rare { border-color: var(--purple); }
     .card-presentation.Good { border-color: var(--green); }
     .card-presentation.Bad { border-color: var(--red); }
@@ -147,34 +146,26 @@
     .radar-sign.joker-sign { background: linear-gradient(135deg, #fef08a, #f59e0b); color: #78350f; border: 1.5px solid #fff; }
     .radar-sign.trap-sign { background: linear-gradient(135deg, #ef4444, #991b1b); color: #fff; border: 1.5px solid #fca5a5; }
 
-    /* ================= CIRCULAR ROULETTE WHEEL ================= */
-    .wheel-container {
+    /* CIRCULAR ROULETTE WHEEL */
+    .wheel-arena {
       display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 0; position: relative;
     }
-    .wheel-wrapper {
-      position: relative; width: 270px; height: 270px; margin: 12px auto;
+    .wheel-outer-stage {
+      position: relative; width: 280px; height: 280px; margin: 10px auto;
     }
-    .wheel-pointer {
+    .wheel-arrow-indicator {
       position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
       width: 0; height: 0; border-left: 14px solid transparent; border-right: 14px solid transparent; border-top: 24px solid var(--gold);
-      z-index: 30; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.8));
+      z-index: 40; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.9));
     }
-    .wheel-disc {
+    .wheel-canvas-box {
       width: 100%; height: 100%; border-radius: 50%;
-      box-shadow: 0 0 25px rgba(245, 158, 11, 0.35), inset 0 0 15px rgba(0,0,0,0.8);
-      border: 6px solid #78350f;
-      position: relative; overflow: hidden;
-      transition: transform 3.8s cubic-bezier(0.15, 0.9, 0.2, 1);
+      box-shadow: 0 0 25px rgba(245, 158, 11, 0.4), inset 0 0 20px rgba(0,0,0,0.8);
+      border: 6px solid #78350f; position: relative; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
     }
-    .wheel-center-cap {
-      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      width: 52px; height: 52px; border-radius: 50%;
-      background: radial-gradient(circle, #fde047 0%, #b45309 100%);
-      border: 3px solid #fff; z-index: 20; box-shadow: 0 4px 10px rgba(0,0,0,0.6);
-      display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
-    }
+    #roulette-canvas { width: 100%; height: 100%; display: block; border-radius: 50%; }
 
-    /* Auto-Advance Bars */
     .online-afk-badge {
       display: inline-flex; align-items: center; gap: 6px; background: #450a0a; border: 1px solid var(--red); color: #fca5a5; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 800;
     }
@@ -252,7 +243,7 @@
       }
     });
 
-    /* COMPACT HERO PORTRAITS */
+    /* HERO PORTRAITS */
     function getCharacterAvatarSVG(id, sz = 32) {
       const themes = {
         c1: ['#064e3b', '#34d399', '🍀'], c2: ['#4c1d95', '#c084fc', '🎭'],
@@ -320,18 +311,18 @@
     const PLAYER_COLORS = ['#6366f1', '#ec4899', '#14b8a6', '#f59e0b', '#8b5cf6', '#06b6d4', '#84cc16', '#f43f5e'];
 
     const MINI_GAMES = [
-      { id: 'mg1', name: 'Blackjack', icon: '🃏', color: '#6366f1' },
-      { id: 'mg2', name: 'Think Box', icon: '📦', color: '#ec4899' },
-      { id: 'mg3', name: 'Push Luck', icon: '🍀', color: '#10b981' },
-      { id: 'mg4', name: 'Guess 15', icon: '🎯', color: '#f59e0b' },
-      { id: 'mg5', name: 'Joker & Trap', icon: '👑', color: '#8b5cf6' },
-      { id: 'mg6', name: 'High Card', icon: '🂡', color: '#06b6d4' },
+      { id: 'mg1', name: 'Blackjack', icon: '🃏', color: '#4f46e5' },
+      { id: 'mg2', name: 'Think Box', icon: '📦', color: '#db2777' },
+      { id: 'mg3', name: 'Push Luck', icon: '🍀', color: '#059669' },
+      { id: 'mg4', name: 'Guess 15', icon: '🎯', color: '#d97706' },
+      { id: 'mg5', name: 'Joker & Trap', icon: '👑', color: '#7c3aed' },
+      { id: 'mg6', name: 'High Card', icon: '🂡', color: '#0891b2' },
       { id: 'mg7', name: 'Greedy Gold', icon: '💰', color: '#e11d48' },
-      { id: 'mg8', name: 'Memory Hunt', icon: '🧠', color: '#f97316' }
+      { id: 'mg8', name: 'Memory Hunt', icon: '🧠', color: '#ea580c' }
     ];
 
     /* =====================================================================
-       CENTRAL GAME ENGINE & FULL NETWORKING
+       MULTIPLAYER ENGINE WITH AUTHORITATIVE SYNC
        ===================================================================== */
     class BoardGameEngine {
       constructor() {
@@ -351,15 +342,17 @@
         this.selectedBoardLength = 15;
         this.activeTimers = [];
 
-        // Online & Automation
+        // Real Network State
         this.isOnline = false;
         this.isHost = false;
         this.roomCode = null;
         this.peer = null;
         this.peersList = [];
         this.hostConn = null;
+        this.myPlayerId = 0;
         this.myPlayerName = 'You';
         this.lobbyMembers = [];
+        this.onlineMoves = {}; // tracks real players who submitted moves
         this.afkTimer = null;
         this.afkSecondsLeft = 45;
         this.autoAdvanceTimer = null;
@@ -414,7 +407,7 @@
           this.log(`⚠️ ${p.name} was AFK (45s)! Move made automatically. (Warning 1/2)`, 'loss');
           if (fallbackFn) fallbackFn();
         } else {
-          this.log(`🚫 ${p.name} timed out twice! Replaced by AI Bot.`, 'loss');
+          this.log(`🚫 ${p.name} timed out twice! Permanently replaced by AI Bot.`, 'loss');
           p.isHuman = false;
           p.name = `Bot (${p.name})`;
           this.renderPlayers();
@@ -422,7 +415,6 @@
         }
       }
 
-      /* AUTOMATIC TIMERS */
       startResultsAutoTimer(seconds, callback) {
         if (this.autoAdvanceTimer) clearInterval(this.autoAdvanceTimer);
         let left = seconds;
@@ -454,7 +446,7 @@
       clearLogs() { this.logs = []; this.renderLogs(); }
 
       /* =====================================================================
-         MULTIPLAYER LOBBY (FIXED SYNC)
+         MULTIPLAYER LOBBY (FIXED WEBRTC SYNC)
          ===================================================================== */
       resetPrompt() {
         this.clearActiveTimers();
@@ -481,6 +473,7 @@
 
       showOfflineSetup() {
         this.isOnline = false;
+        this.myPlayerId = 0;
         document.getElementById('online-mode-indicator').innerText = 'OFFLINE';
         document.getElementById('online-mode-indicator').style.background = '#334155';
         const modal = document.getElementById('modal-container');
@@ -541,12 +534,17 @@
         if (nameInput) this.myPlayerName = nameInput.value.trim() || 'Host';
         this.isOnline = true;
         this.isHost = true;
+        this.myPlayerId = 0;
         document.getElementById('online-mode-indicator').innerText = 'HOST (ONLINE)';
         document.getElementById('online-mode-indicator').style.background = '#065f46';
 
         this.roomCode = Math.floor(100000 + Math.random() * 900000).toString();
         if (this.peer) this.peer.destroy();
-        this.peer = new Peer(`bb-room-${this.roomCode}`);
+
+        // Standard STUN servers for cross-network connectivity
+        this.peer = new Peer(`bb-room-${this.roomCode}`, {
+          config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:global.stun.twilio.com:3478' }] }
+        });
         this.peersList = [];
         this.lobbyMembers = [{ id: 'host', name: this.myPlayerName, isHost: true }];
 
@@ -556,8 +554,10 @@
           conn.on('data', (data) => {
             if (data.type === 'JOIN_LOBBY' && this.lobbyMembers.length < this.selectedPlayerCount) {
               this.lobbyMembers.push({ id: conn.peer, name: data.name, isHost: false, conn });
-              this.broadcast({ type: 'LOBBY_STATE', members: this.lobbyMembers.map(m => ({ name: m.name, isHost: m.isHost })), max: this.selectedPlayerCount, code: this.roomCode });
+              this.broadcastLobby();
               this.renderHostLobbyView();
+            } else if (data.type === 'CLIENT_MOVE') {
+              this.receiveClientMove(data.playerId, data.moveData);
             }
           });
         });
@@ -569,7 +569,7 @@
           <div class="modal-overlay">
             <div class="modal" style="text-align:center;">
               <span class="tag gold">ROOM CODE</span>
-              <h2 style="font-size:2rem; margin-top:6px; letter-spacing:3px; color:var(--gold);">${this.roomCode}</h2>
+              <h2 style="font-size:2.2rem; margin-top:6px; letter-spacing:3px; color:var(--gold);">${this.roomCode}</h2>
               <p style="color:var(--text-muted); font-size:0.8rem; margin:4px 0 14px;">Share this code with players to join.</p>
               <div style="background:#090e17; border:1px solid var(--border); border-radius:12px; padding:12px; margin-bottom:14px; text-align:left;">
                 <div style="font-size:0.85rem; font-weight:800; margin-bottom:8px; display:flex; justify-content:space-between;">
@@ -592,6 +592,15 @@
         `;
       }
 
+      broadcastLobby() {
+        this.broadcast({
+          type: 'LOBBY_STATE',
+          members: this.lobbyMembers.map(m => ({ name: m.name, isHost: m.isHost })),
+          max: this.selectedPlayerCount,
+          code: this.roomCode
+        });
+      }
+
       showJoinRoomModal() {
         const nameInput = document.getElementById('online-player-name');
         if (nameInput) this.myPlayerName = nameInput.value.trim() || 'Guest';
@@ -602,6 +611,7 @@
               <h2 style="font-size:1.5rem; color:#38bdf8; margin-bottom:4px;">🔑 Join Room</h2>
               <input type="text" id="join-code-input" maxlength="6" inputmode="numeric" placeholder="6-digit code"
                      style="width:100%; background:#090e17; border:2px solid var(--border); border-radius:12px; padding:12px; color:white; font-size:1.5rem; text-align:center; letter-spacing:5px; margin: 14px 0;" />
+              <div id="join-status-banner" style="display:none; color:var(--gold); font-size:0.85rem; margin-bottom:10px;">Connecting to room...</div>
               <button class="success" style="width:100%; font-size:1.05rem;" onclick="game.connectToRoom()">Enter Room</button>
               <button class="secondary" style="width:100%; margin-top:8px;" onclick="game.showOnlineMenu()">Back</button>
             </div>
@@ -611,7 +621,9 @@
 
       connectToRoom() {
         const code = document.getElementById('join-code-input').value.trim();
-        if (code.length < 6) return alert("Enter valid 6-digit room code.");
+        if (code.length < 6) return alert("Enter valid 6-digit code.");
+        document.getElementById('join-status-banner').style.display = 'block';
+
         this.isOnline = true;
         this.isHost = false;
         this.roomCode = code;
@@ -619,35 +631,48 @@
         document.getElementById('online-mode-indicator').style.background = '#1e3a8a';
 
         if (this.peer) this.peer.destroy();
-        this.peer = new Peer();
+        this.peer = new Peer({
+          config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:global.stun.twilio.com:3478' }] }
+        });
+
         this.peer.on('open', () => {
           this.hostConn = this.peer.connect(`bb-room-${code}`);
-          this.hostConn.on('open', () => this.hostConn.send({ type: 'JOIN_LOBBY', name: this.myPlayerName }));
+          this.hostConn.on('open', () => {
+            this.hostConn.send({ type: 'JOIN_LOBBY', name: this.myPlayerName });
+            this.renderClientLobby([{ name: this.myPlayerName, isHost: false }]);
+          });
           this.hostConn.on('data', (d) => {
             if (d.type === 'LOBBY_STATE') {
               this.renderClientLobby(d.members);
-            } else if (d.type === 'GAME_START') {
-              // CLIENT FIX: Close waiting screen immediately and sync game state
+            } else if (d.type === 'MATCH_START') {
+              // CLIENT FIX: Close waiting screen immediately and sync full state
               document.getElementById('modal-container').innerHTML = '';
               this.players = d.players;
               this.maxPos = d.maxPos;
               this.milestones = d.milestones;
               this.round = d.round;
+              const myP = this.players.find(p => p.name === this.myPlayerName);
+              if (myP) this.myPlayerId = myP.id;
               this.renderAll();
               this.startMiniGameRoulette(d.targetGameId);
+            } else if (d.type === 'LAUNCH_MINIGAME') {
+              this.currentMiniGame = MINI_GAMES.find(g => g.id === d.mgId);
+              this.launchMiniGame(d.mgId, d.state);
+            } else if (d.type === 'RESULTS_SHOW') {
+              this.setPendingResults(d.w, d.l, d.winR, d.loseP);
             }
           });
         });
       }
 
-      renderClientLobby(members = [{ name: this.myPlayerName, isHost: false }]) {
+      renderClientLobby(members) {
         const modal = document.getElementById('modal-container');
         modal.innerHTML = `
           <div class="modal-overlay">
             <div class="modal" style="text-align:center;">
               <span class="tag green">ROOM JOINED</span>
-              <h2 style="font-size:1.8rem; margin-top:6px; color:var(--gold);">${this.roomCode}</h2>
-              <p style="color:var(--text-muted); font-size:0.8rem; margin:4px 0 14px;">Waiting for room creator to launch match...</p>
+              <h2 style="font-size:2rem; margin-top:6px; color:var(--gold);">${this.roomCode}</h2>
+              <p style="color:var(--text-muted); font-size:0.8rem; margin:4px 0 14px;">Waiting for host to start the match...</p>
               <div style="background:#090e17; border:1px solid var(--border); border-radius:12px; padding:12px; margin-bottom:14px; text-align:left;">
                 ${members.map(m => `
                   <div style="background:#131b2e; padding:6px 10px; border-radius:6px; font-size:0.85rem; margin-bottom:4px; display:flex; justify-content:space-between;">
@@ -656,7 +681,7 @@
                   </div>
                 `).join('')}
               </div>
-              <div style="color:#fde047; font-size:0.85rem;">⏳ The match will start automatically once launched!</div>
+              <div style="color:#fde047; font-size:0.85rem;">⏳ Screen updates automatically as soon as host launches!</div>
             </div>
           </div>
         `;
@@ -666,13 +691,34 @@
         this.peersList.forEach(c => { if (c.open) c.send(payload); });
       }
 
+      sendMoveToHost(moveData) {
+        if (this.isOnline && !this.isHost && this.hostConn) {
+          this.hostConn.send({ type: 'CLIENT_MOVE', playerId: this.myPlayerId, moveData });
+        }
+      }
+
+      receiveClientMove(playerId, moveData) {
+        this.onlineMoves[playerId] = moveData;
+        this.checkAllOnlineMoves();
+      }
+
+      checkAllOnlineMoves() {
+        if (!this.isHost) return;
+        const realPlayers = this.players.filter(p => p.isHuman);
+        const allSubmitted = realPlayers.every(p => this.onlineMoves[p.id] !== undefined);
+        if (allSubmitted) {
+          this.stopAfkTimer();
+          this.resolveActiveMiniGameOnline();
+        }
+      }
+
       startOnlineGameFromLobby() {
         document.getElementById('modal-container').innerHTML = '';
         const total = this.selectedPlayerCount;
         const shuffledChars = [...CHARACTERS].sort(() => Math.random() - 0.5);
         this.players = [];
 
-        // Real Players
+        // Real Players from lobby
         this.lobbyMembers.forEach((m, idx) => {
           this.players.push({
             id: idx, name: m.name, isHuman: true, color: PLAYER_COLORS[idx % PLAYER_COLORS.length],
@@ -682,7 +728,7 @@
           });
         });
 
-        // Fill remaining slots with AI Bots
+        // Fill remaining with AI Bots
         const botsNeeded = total - this.players.length;
         for (let b = 0; b < botsNeeded; b++) {
           const idx = this.players.length;
@@ -703,9 +749,9 @@
 
         const targetGame = MINI_GAMES[Math.floor(Math.random() * MINI_GAMES.length)];
 
-        // BROADCAST TO ALL CLIENTS TO START TOGETHER
+        // FULL BROADCAST TO ALL CLIENTS
         this.broadcast({
-          type: 'GAME_START',
+          type: 'MATCH_START',
           players: this.players,
           maxPos: this.maxPos,
           milestones: this.milestones,
@@ -720,6 +766,7 @@
       startNewGame(totalPlayers = 6, boardLength = 15) {
         this.clearActiveTimers();
         this.isOnline = false;
+        this.myPlayerId = 0;
         this.round = 1;
         this.maxPos = boardLength;
         this.milestones = boardLength === 10 ? [4, 7] : boardLength === 20 ? [5, 10, 15] : [5, 10];
@@ -764,7 +811,7 @@
         this.milestones.forEach(stage => {
           if (p.pos >= stage && !this.milestonesTriggered[stage]) {
             this.milestonesTriggered[stage] = true;
-            this.log(`🌟 FIRST CONTENDER touched Stage ${stage}! All draw cards!`, 'effect');
+            this.log(`🌟 FIRST CONTENDER reached Stage ${stage}! Special Cards unlocked!`, 'effect');
             this.showGlobalMilestoneAlert(stage);
           }
         });
@@ -787,7 +834,7 @@
               <div style="font-size:3.5rem; margin-bottom:8px;">⭐</div>
               <h2 style="color:var(--gold); font-size:1.6rem;">Milestone Stage ${stage} Reached!</h2>
               <p style="color:var(--text-muted); margin: 12px 0;">All contenders unlock a Special Card.</p>
-              <div id="milestone-auto-cnt" style="font-size:0.85rem; color:#facc15; font-weight:bold;">Drawing automatically in 4s...</div>
+              <div style="font-size:0.85rem; color:#facc15; font-weight:bold;">Drawing cards automatically in 4s...</div>
             </div>
           </div>
         `;
@@ -821,10 +868,10 @@
             if (stolenCardsMap[p.id]) {
               stolenCardsMap[p.id].forEach(item => {
                 this.giveCardToPlayer(p, item.card, false);
-                this.log(`💰 ${p.name} claimed second card [${item.card.name}] from ${item.from.name}!`, 'win');
+                this.log(`💰 ${p.name} claimed 2nd card [${item.card.name}] from ${item.from.name}!`, 'win');
               });
-              if (p.isHuman) this.showThiefDoubleModal(regular, stolenCardsMap[p.id][0]);
-            } else if (p.isHuman) {
+              if (p.id === this.myPlayerId) this.showThiefDoubleModal(regular, stolenCardsMap[p.id][0]);
+            } else if (p.id === this.myPlayerId) {
               this.showCardModal(regular);
             }
           }
@@ -862,7 +909,7 @@
         else if (card.id === 'card_unlucky_win') p.unluckyWinActive = true;
         else if (card.id === 'card_extra_chance') p.hasExtraChance = true;
         p.cards.push(card);
-        if (p.isHuman && show) this.showCardModal(card);
+        if (p.id === this.myPlayerId && show) this.showCardModal(card);
         this.renderPlayers();
       }
 
@@ -894,7 +941,7 @@
       }
 
       /* =====================================================================
-         CIRCULAR ROULETTE WHEEL
+         CANVAS CIRCULAR ROULETTE WHEEL
          ===================================================================== */
       startMiniGameRoulette(presetGameId = null) {
         this.clearActiveTimers();
@@ -906,47 +953,16 @@
         this.status = 'ROULETTE';
         document.getElementById('round-counter').innerText = `Round ${this.round}`;
 
-        const targetIdx = MINI_GAMES.findIndex(g => g.id === targetGame.id);
         const panel = document.getElementById('arena-panel');
-
-        // Draw 8 SVG sectors for the wheel
-        const slicesSVG = MINI_GAMES.map((g, i) => {
-          const angleStart = i * 45;
-          const angleEnd = (i + 1) * 45;
-          const r = 130;
-          const rad1 = (angleStart * Math.PI) / 180;
-          const rad2 = (angleEnd * Math.PI) / 180;
-          const x1 = 135 + r * Math.sin(rad1);
-          const y1 = 135 - r * Math.cos(rad1);
-          const x2 = 135 + r * Math.sin(rad2);
-          const y2 = 135 - r * Math.cos(rad2);
-          const path = `M 135 135 L ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2} Z`;
-
-          // Text placement angle
-          const midRad = ((angleStart + 22.5) * Math.PI) / 180;
-          const tx = 135 + (r * 0.68) * Math.sin(midRad);
-          const ty = 135 - (r * 0.68) * Math.cos(midRad);
-
-          return `
-            <path d="${path}" fill="${g.color}" stroke="#1e1b4b" stroke-width="2"/>
-            <text x="${tx}" y="${ty}" font-size="16" text-anchor="middle" dominant-baseline="middle" transform="rotate(${angleStart + 22.5}, ${tx}, ${ty})">
-              ${g.icon}
-            </text>
-          `;
-        }).join('');
-
         panel.innerHTML = `
-          <div class="wheel-container">
+          <div class="wheel-arena">
             <div style="font-size:0.85rem; font-weight:800; color:var(--gold); letter-spacing:1px;">🎰 MINI-GAME ROULETTE</div>
             <h3 style="margin:2px 0 6px;">Spinning for Round ${this.round}...</h3>
 
-            <div class="wheel-wrapper">
-              <div class="wheel-pointer"></div>
-              <div class="wheel-disc" id="circular-wheel-disc">
-                <svg width="270" height="270" viewBox="0 0 270 270">
-                  ${slicesSVG}
-                </svg>
-                <div class="wheel-center-cap">🎲</div>
+            <div class="wheel-outer-stage">
+              <div class="wheel-arrow-indicator"></div>
+              <div class="wheel-canvas-box">
+                <canvas id="roulette-canvas" width="280" height="280"></canvas>
               </div>
             </div>
 
@@ -954,25 +970,96 @@
           </div>
         `;
 
-        // Calculate rotation degrees (5 full spins + stop slice)
-        const disc = document.getElementById('circular-wheel-disc');
-        const degreesPerSlice = 45;
-        const totalRotation = (360 * 5) + (360 - (targetIdx * degreesPerSlice) - 22.5);
+        this.drawAndSpinCanvasWheel(targetGame);
+      }
 
-        setTimeout(() => {
-          disc.style.transform = `rotate(${totalRotation}deg)`;
-        }, 80);
+      drawAndSpinCanvasWheel(targetGame) {
+        const canvas = document.getElementById('roulette-canvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const numSlices = MINI_GAMES.length;
+        const arc = (2 * Math.PI) / numSlices;
+        const targetIdx = MINI_GAMES.findIndex(g => g.id === targetGame.id);
 
-        setTimeout(() => {
-          document.getElementById('wheel-winner-banner').innerText = `🎯 SELECTED: ${targetGame.name}!`;
-          document.getElementById('wheel-winner-banner').style.color = 'var(--gold)';
-          setTimeout(() => this.launchMiniGame(targetGame.id), 1800);
-        }, 4000);
+        let currentAngle = 0;
+        const totalSpins = 5;
+        // Pointer is at TOP (3 * Math.PI / 2 radians = 270 deg)
+        const targetStopAngle = (totalSpins * 2 * Math.PI) + ((3 * Math.PI / 2) - (targetIdx * arc) - (arc / 2));
+
+        const startTime = performance.now();
+        const duration = 3500;
+
+        const renderFrame = (now) => {
+          const elapsed = now - startTime;
+          const progress = Math.min(1, elapsed / duration);
+          // Ease-out cubic
+          const ease = 1 - Math.pow(1 - progress, 3);
+          currentAngle = ease * targetStopAngle;
+
+          ctx.clearRect(0, 0, 280, 280);
+          ctx.save();
+          ctx.translate(140, 140);
+          ctx.rotate(currentAngle);
+
+          for (let i = 0; i < numSlices; i++) {
+            const angle = i * arc;
+            ctx.beginPath();
+            ctx.fillStyle = MINI_GAMES[i].color;
+            ctx.moveTo(0, 0);
+            ctx.arc(0, 0, 134, angle, angle + arc);
+            ctx.lineTo(0, 0);
+            ctx.fill();
+
+            // Gold divider
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Text & icon
+            ctx.save();
+            ctx.rotate(angle + arc / 2);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 13px sans-serif';
+            ctx.textAlign = 'right';
+            ctx.fillText(`${MINI_GAMES[i].icon} ${MINI_GAMES[i].name}`, 125, 4);
+            ctx.restore();
+          }
+
+          // Center Hub
+          ctx.beginPath();
+          ctx.arc(0, 0, 26, 0, 2 * Math.PI);
+          ctx.fillStyle = '#1e1b4b';
+          ctx.fill();
+          ctx.strokeStyle = '#f59e0b';
+          ctx.lineWidth = 4;
+          ctx.stroke();
+          ctx.fillStyle = '#fde047';
+          ctx.font = '20px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('🎲', 0, 7);
+
+          ctx.restore();
+
+          if (progress < 1) {
+            requestAnimationFrame(renderFrame);
+          } else {
+            const banner = document.getElementById('wheel-winner-banner');
+            if (banner) {
+              banner.innerText = `🎯 SELECTED: ${targetGame.name}!`;
+              banner.style.color = 'var(--gold)';
+            }
+            setTimeout(() => this.launchMiniGame(targetGame.id), 1800);
+          }
+        };
+
+        requestAnimationFrame(renderFrame);
       }
 
       launchMiniGame(mgId) {
         this.clearActiveTimers();
         this.status = 'MINIGAME';
+        this.onlineMoves = {}; // reset round moves
+
         if (mgId === 'mg1') this.setupBlackjack();
         else if (mgId === 'mg2') this.setupThinkBox();
         else if (mgId === 'mg3') this.setupPushLuck();
@@ -985,7 +1072,9 @@
 
       setPendingResults(w, l, winR = 1, loseP = 1) {
         this.pendingResults = { winners: Array.from(new Set(w)), losers: Array.from(new Set(l)), winReward: winR, losePenalty: loseP };
-        // 10s automatic board advance
+        if (this.isHost) {
+          this.broadcast({ type: 'RESULTS_SHOW', w, l, winR, loseP });
+        }
         this.startResultsAutoTimer(10, () => this.applyPendingResults());
       }
 
@@ -1040,7 +1129,7 @@
           <div style="text-align:center; padding: 28px 12px;">
             <div style="font-size:3rem; margin-bottom:6px;">🎲</div>
             <h2 style="color:var(--gold); font-size:1.6rem;">Round ${this.round} Approaching!</h2>
-            <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:14px;">Board updated. Preparing circular roulette spin...</p>
+            <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:14px;">Standings updated. Spinning roulette in 5s...</p>
             <div id="auto-advance-display"></div>
             <button class="gold" style="width:100%; max-width:320px; font-size:1.1rem; padding:12px;" onclick="game.startMiniGameRoulette()">
               🎰 Spin Next Mini-Game
@@ -1048,13 +1137,11 @@
           </div>
         `;
         this.renderAll();
-
-        // 5s automatic transition to next roulette
         this.startResultsAutoTimer(5, () => this.startMiniGameRoulette());
       }
 
       /* =====================================================================
-         8 COMPACT MINI-GAMES
+         MINI-GAMES (MULTIPLAYER AWARE)
          ===================================================================== */
       /* 1. Blackjack */
       setupBlackjack() {
@@ -1066,7 +1153,7 @@
 
         this.miniGameState = { deck: d, bj: this.players.map(p => ({ p, hand: [d.pop(), d.pop()], stand: false })) };
         this.renderBlackjack();
-        this.startAfkTimer(this.players[0].id, () => this.bjStand());
+        this.startAfkTimer(this.myPlayerId, () => this.bjStand());
       }
       calcBJ(h) {
         let sc = h.reduce((a,c) => a + c.n, 0), ac = h.filter(c => c.v==='A').length;
@@ -1074,31 +1161,58 @@
         return sc;
       }
       renderBlackjack() {
-        const st = this.miniGameState, h = st.bj[0], sc = this.calcBJ(h.hand);
+        const st = this.miniGameState;
+        const myBj = st.bj.find(b => b.p.id === this.myPlayerId) || st.bj[0];
+        const sc = this.calcBJ(myBj.hand);
+
         document.getElementById('arena-panel').innerHTML = `
           <div class="arena-header"><h2>🃏 Blackjack Showdown</h2><span class="tag gold">Top 2: +1 | Lowest: -1</span></div>
           <div style="background:#090e17; padding:12px; border-radius:10px;">
-            <h4>Your Hand (Score: <span style="color:var(--gold); font-size:1.2rem;">${sc}</span> ${sc > 21 ? 'BUST!' : ''})</h4>
-            <div class="cards-row" style="margin:8px 0;">${h.hand.map(c => `<div class="deck-playing-card ${c.r?'red':''}"><div>${c.v}</div><div style="text-align:center; font-size:1.2rem;">${c.s}</div><div style="text-align:right;">${c.v}</div></div>`).join('')}</div>
-            <div style="display:flex; gap:8px;">
-              <button style="flex:1;" onclick="game.bjHit()" ${h.stand || sc >= 21 ? 'disabled':''}>Hit</button>
-              <button class="secondary" style="flex:1;" onclick="game.bjStand()" ${h.stand ? 'disabled':''}>Stand</button>
+            <h4>Your Hand (${myBj.p.name}): <span style="color:var(--gold); font-size:1.2rem;">${sc}</span> ${sc > 21 ? 'BUST!' : ''}</h4>
+            <div class="cards-row" style="margin:8px 0;">
+              ${myBj.hand.map(c => `<div class="deck-playing-card ${c.r?'red':''}"><div>${c.v}</div><div style="text-align:center; font-size:1.2rem;">${c.s}</div><div style="text-align:right;">${c.v}</div></div>`).join('')}
             </div>
+            <div style="display:flex; gap:8px;">
+              <button style="flex:1;" onclick="game.bjHit()" ${myBj.stand || sc >= 21 ? 'disabled':''}>Hit</button>
+              <button class="secondary" style="flex:1;" onclick="game.bjStand()" ${myBj.stand ? 'disabled':''}>Stand</button>
+            </div>
+          </div>
+          <div style="margin-top:10px; font-size:0.8rem; color:var(--text-muted);">
+            Contenders: ${st.bj.map(b => `${b.p.name}: ${b.stand ? 'Ready ✓' : 'Thinking...'}`).join(' | ')}
           </div>
           <div id="auto-advance-display"></div>
         `;
       }
       bjHit() {
         const st = this.miniGameState;
-        st.bj[0].hand.push(st.deck.pop());
-        if (this.calcBJ(st.bj[0].hand) > 21) this.bjStand();
+        const myBj = st.bj.find(b => b.p.id === this.myPlayerId);
+        if (!myBj || myBj.stand) return;
+        myBj.hand.push(st.deck.pop());
+        if (this.calcBJ(myBj.hand) > 21) this.bjStand();
         else this.renderBlackjack();
       }
       bjStand() {
         this.stopAfkTimer();
         const st = this.miniGameState;
-        st.bj[0].stand = true;
-        st.bj.slice(1).forEach(b => { while (this.calcBJ(b.hand) < 16) b.hand.push(st.deck.pop()); });
+        const myBj = st.bj.find(b => b.p.id === this.myPlayerId);
+        if (myBj) myBj.stand = true;
+
+        if (this.isOnline && !this.isHost) {
+          this.sendMoveToHost({ stand: true, score: this.calcBJ(myBj.hand) });
+          this.renderBlackjack();
+        } else {
+          this.onlineMoves[this.myPlayerId] = { stand: true, score: this.calcBJ(myBj.hand) };
+          this.checkAllOnlineMoves();
+          if (!this.isOnline) this.resolveActiveMiniGameOnline();
+        }
+      }
+      resolveActiveMiniGameOnline() {
+        const st = this.miniGameState;
+        // Bots stand or hit automatically
+        st.bj.filter(b => !b.p.isHuman).forEach(b => {
+          while (this.calcBJ(b.hand) < 16) b.hand.push(st.deck.pop());
+        });
+
         const scored = st.bj.map(b => ({ id: b.p.id, name: b.p.name, sc: this.calcBJ(b.hand), b: this.calcBJ(b.hand) > 21 }));
         const valid = scored.filter(s => !s.b).sort((a,b) => b.sc - a.sc);
         const w = valid.slice(0, 2).map(x => x.id);
@@ -1112,16 +1226,16 @@
             ${scored.map(s => `<div style="background:#090e17; padding:8px; border-radius:6px; border:1px solid ${w.includes(s.id)?'var(--green)':l.includes(s.id)?'var(--red)':'#334155'};"><strong>${s.name}</strong><div>Score: ${s.sc} ${s.b?'(BUST)':''}</div></div>`).join('')}
           </div>
           <div id="auto-advance-display"></div>
-          <button class="success" style="width:100%; margin-top:10px;" onclick="game.applyPendingResults()">Proceed to Board Updates</button>
+          <button class="success" style="width:100%; margin-top:10px;" onclick="game.applyPendingResults()">Proceed</button>
         `;
       }
 
-      /* 2. Think Outside Box */
+      /* 2. Think Box */
       setupThinkBox() {
         const q = { q: 'Pick a Superpower', options: ['Flight', 'Invisibility', 'Time Travel', 'Telekinesis'] };
-        this.miniGameState = { q };
+        this.miniGameState = { q, votes: {} };
         document.getElementById('arena-panel').innerHTML = `
-          <div class="arena-header"><h2>📦 Think Outside the Box</h2><span class="tag gold">Least Popular: +2</span></div>
+          <div class="arena-header"><h2>📦 Think Outside Box</h2><span class="tag gold">Least Popular: +2</span></div>
           <div style="background:#090e17; padding:14px; border-radius:10px;">
             <h3>${q.q}</h3>
             <div style="display:grid; grid-template-columns:1fr; gap:8px; margin-top:10px;">
@@ -1129,22 +1243,36 @@
             </div>
           </div>
         `;
-        this.startAfkTimer(this.players[0].id, () => this.pickThinkBox(q.options[0]));
+        this.startAfkTimer(this.myPlayerId, () => this.pickThinkBox(q.options[0]));
       }
-      pickThinkBox(humanPick) {
+      pickThinkBox(opt) {
         this.stopAfkTimer();
+        if (this.isOnline && !this.isHost) {
+          this.sendMoveToHost({ opt });
+          document.getElementById('arena-panel').innerHTML = `<div style="padding:20px; text-align:center;"><h3>Choice locked: ${opt}</h3><p>Waiting for contenders...</p></div>`;
+        } else {
+          this.onlineMoves[this.myPlayerId] = { opt };
+          if (!this.isOnline) this.resolveThinkBox();
+          else this.checkAllOnlineMoves();
+        }
+      }
+      resolveThinkBox() {
         const q = this.miniGameState.q, counts = {};
         q.options.forEach(o => counts[o] = 0);
         const votes = {};
-        votes[this.players[0].id] = humanPick; counts[humanPick]++;
-        this.players.slice(1).forEach(b => {
-          const opt = q.options[Math.floor(Math.random() * q.options.length)];
-          votes[b.id] = opt; counts[opt]++;
+
+        this.players.forEach(p => {
+          let chosen = (this.onlineMoves[p.id] && this.onlineMoves[p.id].opt) 
+            ? this.onlineMoves[p.id].opt 
+            : q.options[Math.floor(Math.random() * q.options.length)];
+          votes[p.id] = chosen;
+          counts[chosen]++;
         });
-        const minCount = Math.min(...Object.values(counts));
-        const winners = this.players.filter(p => counts[votes[p.id]] === minCount).map(p => p.id);
-        const maxCount = Math.max(...Object.values(counts));
-        const losers = this.players.filter(p => counts[votes[p.id]] === maxCount).map(p => p.id);
+
+        const min = Math.min(...Object.values(counts));
+        const max = Math.max(...Object.values(counts));
+        const winners = this.players.filter(p => counts[votes[p.id]] === min).map(p => p.id);
+        const losers = this.players.filter(p => counts[votes[p.id]] === max).map(p => p.id);
 
         this.setPendingResults(winners, losers, 2, 1);
         document.getElementById('arena-panel').innerHTML = `
@@ -1158,9 +1286,9 @@
       /* 3. Push Luck */
       setupPushLuck() {
         const pool = [-6,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10,-5,6].sort(() => Math.random() - 0.5);
-        this.miniGameState = { pool, picks: [], retries: 2 };
+        this.miniGameState = { pool, picks: [] };
         this.renderPushLuck();
-        this.startAfkTimer(this.players[0].id, () => {
+        this.startAfkTimer(this.myPlayerId, () => {
           while (this.miniGameState.picks.length < 3) this.miniGameState.picks.push(this.miniGameState.picks.length);
           this.finishPushLuck();
         });
@@ -1168,7 +1296,7 @@
       renderPushLuck() {
         const st = this.miniGameState;
         document.getElementById('arena-panel').innerHTML = `
-          <div class="arena-header"><h2>🍀 Push Your Luck (18 Cards)</h2><span class="tag gold">Retries: ${st.retries}</span></div>
+          <div class="arena-header"><h2>🍀 Push Your Luck (18 Cards)</h2><span class="tag gold">Pick 3</span></div>
           <div class="grid-pick">${st.pool.map((v, i) => `<div class="mystery-card ${st.picks.includes(i)?'revealed':''}" onclick="game.pickPushLuck(${i})">${st.picks.includes(i)?(v>=0?'+'+v:v):'❓'}</div>`).join('')}</div>
           ${st.picks.length === 3 ? `<button class="success" style="width:100%;" onclick="game.finishPushLuck()">Lock In Score (${st.picks.reduce((a,b)=>a+st.pool[b],0)})</button>` : ''}
         `;
@@ -1179,13 +1307,27 @@
       }
       finishPushLuck() {
         this.stopAfkTimer();
-        const st = this.miniGameState, hScore = st.picks.reduce((a,b) => a + st.pool[b], 0);
-        const scored = [{ id: this.players[0].id, sc: hScore }];
-        this.players.slice(1).forEach(b => scored.push({ id: b.id, sc: Math.floor(Math.random() * 12) }));
-        scored.sort((a,b) => b.sc - a.sc);
+        const score = this.miniGameState.picks.reduce((a,b) => a + this.miniGameState.pool[b], 0);
+        if (this.isOnline && !this.isHost) {
+          this.sendMoveToHost({ score });
+          document.getElementById('arena-panel').innerHTML = `<div style="padding:20px; text-align:center;"><h3>Score locked: ${score}</h3><p>Waiting for contenders...</p></div>`;
+        } else {
+          this.onlineMoves[this.myPlayerId] = { score };
+          if (!this.isOnline) this.resolvePushLuck();
+          else this.checkAllOnlineMoves();
+        }
+      }
+      resolvePushLuck() {
+        const scored = this.players.map(p => {
+          const sc = (this.onlineMoves[p.id] && this.onlineMoves[p.id].score !== undefined) 
+            ? this.onlineMoves[p.id].score 
+            : Math.floor(Math.random() * 12);
+          return { id: p.id, sc };
+        }).sort((a,b) => b.sc - a.sc);
+
         this.setPendingResults([scored[0].id], [scored[scored.length - 1].id], 1, 1);
         document.getElementById('arena-panel').innerHTML = `
-          <div class="arena-header"><h2>🍀 Results</h2></div>
+          <div class="arena-header"><h2>🍀 Push Luck Results</h2></div>
           <div style="background:#090e17; padding:10px; border-radius:8px;">${scored.map(s => `<div>${this.players.find(p=>p.id===s.id).name}: <strong>${s.sc}</strong></div>`).join('')}</div>
           <div id="auto-advance-display"></div>
           <button class="success" style="width:100%; margin-top:10px;" onclick="game.applyPendingResults()">Proceed</button>
@@ -1202,17 +1344,29 @@
             <div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:6px;">${[1,2,3,4,5,6,7,8,9,10].map(n => `<button onclick="game.pickGuess15(${n})">${n}</button>`).join('')}</div>
           </div>
         `;
-        this.startAfkTimer(this.players[0].id, () => this.pickGuess15(5));
+        this.startAfkTimer(this.myPlayerId, () => this.pickGuess15(5));
       }
       pickGuess15(n) {
         this.stopAfkTimer();
+        if (this.isOnline && !this.isHost) {
+          this.sendMoveToHost({ n });
+          document.getElementById('arena-panel').innerHTML = `<div style="padding:20px; text-align:center;"><h3>Number ${n} locked</h3><p>Waiting for contenders...</p></div>`;
+        } else {
+          this.onlineMoves[this.myPlayerId] = { n };
+          if (!this.isOnline) this.resolveGuess15();
+          else this.checkAllOnlineMoves();
+        }
+      }
+      resolveGuess15() {
         const sec = this.miniGameState.secret;
-        const res = [{ id: this.players[0].id, d: Math.abs(15 - (n + sec)), n }];
-        this.players.slice(1).forEach(b => { const bn = Math.floor(Math.random()*4)+7; res.push({ id: b.id, d: Math.abs(15 - (bn + sec)), n: bn }); });
-        res.sort((a,b) => a.d - b.d);
+        const res = this.players.map(p => {
+          const num = (this.onlineMoves[p.id] && this.onlineMoves[p.id].n) ? this.onlineMoves[p.id].n : Math.floor(Math.random()*4)+7;
+          return { id: p.id, d: Math.abs(15 - (num + sec)), n: num };
+        }).sort((a,b) => a.d - b.d);
+
         this.setPendingResults([res[0].id], [res[res.length - 1].id], 1, 1);
         document.getElementById('arena-panel').innerHTML = `
-          <div class="arena-header"><h2>🎯 Results (Hidden was ${sec})</h2></div>
+          <div class="arena-header"><h2>🎯 Guess 15 Results (Hidden: ${sec})</h2></div>
           <div style="background:#090e17; padding:10px; border-radius:8px;">${res.map(r => `<div>${this.players.find(p=>p.id===r.id).name}: Picked ${r.n} (Diff: ${r.d})</div>`).join('')}</div>
           <div id="auto-advance-display"></div>
           <button class="success" style="width:100%; margin-top:10px;" onclick="game.applyPendingResults()">Proceed</button>
@@ -1228,11 +1382,11 @@
         this.players.forEach(p => hands[p.id] = [pool.pop(), pool.pop(), pool.pop(), pool.pop()]);
         this.miniGameState = { hands, round: 1 };
         this.renderJokerTrap();
-        this.startAfkTimer(this.players[0].id, () => this.drawJokerTrap(0));
+        this.startAfkTimer(this.myPlayerId, () => this.drawJokerTrap(0));
       }
       renderJokerTrap() {
         const st = this.miniGameState, n = this.players.length;
-        const neighbor = this.players[n - 1];
+        const neighbor = this.players[(this.myPlayerId + n - 1) % n];
         document.getElementById('arena-panel').innerHTML = `
           <div class="arena-header"><h2>🃏 Joker & Trap (${st.round}/3)</h2><span class="tag gold">Exchange</span></div>
           <div class="poker-table-surface">
@@ -1252,17 +1406,19 @@
               }).join('')}
             </div>
           </div>
-          <p style="font-size:0.8rem; text-align:center;">Tap a card from <strong style="color:#38bdf8;">${neighbor.name}</strong> to draw!</p>
+          <p style="font-size:0.8rem; text-align:center;">Draw 1 card from <strong style="color:#38bdf8;">${neighbor.name}</strong>!</p>
         `;
       }
       drawJokerTrap(idx) {
         this.stopAfkTimer();
         const st = this.miniGameState, n = this.players.length;
-        const taken = st.hands[this.players[n - 1].id].splice(idx, 1)[0];
-        st.hands[this.players[0].id].push(taken);
-        for (let i = 1; i < n; i++) {
-          const botTaken = st.hands[this.players[i - 1].id].splice(0, 1)[0];
-          st.hands[this.players[i].id].push(botTaken);
+        const taken = st.hands[this.players[(this.myPlayerId + n - 1) % n].id].splice(idx, 1)[0];
+        st.hands[this.myPlayerId].push(taken);
+        for (let i = 0; i < n; i++) {
+          if (i !== this.myPlayerId) {
+            const bTaken = st.hands[this.players[(i + n - 1) % n].id].splice(0, 1)[0];
+            st.hands[i].push(bTaken);
+          }
         }
         st.round++;
         if (st.round <= 3) this.renderJokerTrap();
@@ -1289,14 +1445,14 @@
         this.miniGameState = { hands, round: 1, scores: {} };
         this.players.forEach(p => this.miniGameState.scores[p.id] = 0);
         this.renderHighCard();
-        this.startAfkTimer(this.players[0].id, () => this.playHighCard(0));
+        this.startAfkTimer(this.myPlayerId, () => this.playHighCard(0));
       }
       renderHighCard() {
-        const st = this.miniGameState, myHand = st.hands[this.players[0].id];
+        const st = this.miniGameState, myHand = st.hands[this.myPlayerId] || st.hands[0];
         document.getElementById('arena-panel').innerHTML = `
           <div class="arena-header"><h2>🂡 High Card (${st.round}/5)</h2><span class="tag gold">High: +3 | Low: -1</span></div>
           <div style="background:#090e17; padding:12px; border-radius:10px;">
-            <h4>Your Cards:</h4>
+            <h4>Your Hand:</h4>
             <div class="cards-row">${myHand.map((val, idx) => `<div class="deck-playing-card gold-card interactive" onclick="game.playHighCard(${idx})"><div style="text-align:center; font-size:1.6rem; margin:auto;">${val}</div></div>`).join('')}</div>
           </div>
         `;
@@ -1304,8 +1460,8 @@
       playHighCard(idx) {
         this.stopAfkTimer();
         const st = this.miniGameState;
-        const played = [{ id: this.players[0].id, v: st.hands[this.players[0].id].splice(idx, 1)[0] }];
-        this.players.slice(1).forEach(b => played.push({ id: b.id, v: st.hands[b.id].splice(0, 1)[0] }));
+        const played = [{ id: this.myPlayerId, v: st.hands[this.myPlayerId].splice(idx, 1)[0] }];
+        this.players.filter(p => p.id !== this.myPlayerId).forEach(b => played.push({ id: b.id, v: st.hands[b.id].splice(0, 1)[0] }));
         played.sort((a,b) => b.v - a.v);
         st.scores[played[0].id] += 3;
         st.scores[played[played.length - 1].id] -= 1;
@@ -1329,14 +1485,14 @@
         this.miniGameState = { budget, round: 1, coins: {} };
         this.players.forEach(p => this.miniGameState.coins[p.id] = 0);
         this.renderGreedyTreasure();
-        this.startAfkTimer(this.players[0].id, () => this.bidGreedy(Math.floor(budget / 3)));
+        this.startAfkTimer(this.myPlayerId, () => this.bidGreedy(Math.floor(budget / 3)));
       }
       renderGreedyTreasure() {
         const st = this.miniGameState;
         document.getElementById('arena-panel').innerHTML = `
           <div class="arena-header"><h2>💰 Greedy Treasure (${st.round}/3)</h2><span class="tag gold">Budget: ${st.budget}</span></div>
           <div style="background:#090e17; padding:14px; border-radius:10px; text-align:center;">
-            <p>Request coins (0 to ${st.budget}). If group exceeds budget, all get 0!</p>
+            <p>Request coins (0 to ${st.budget}). If group exceeds budget, all receive 0!</p>
             <div style="display:flex; gap:8px; margin-top:12px;">
               <input type="number" id="greedy-in" min="0" max="${st.budget}" value="${Math.floor(st.budget/3)}" style="width:100px; padding:10px; background:#1e293b; color:#fff; border-radius:8px; border:1px solid #334155; font-size:1.1rem; text-align:center;" />
               <button class="gold" style="flex:1;" onclick="game.bidGreedy(parseInt(document.getElementById('greedy-in').value))">Request Coins</button>
@@ -1349,8 +1505,8 @@
         const st = this.miniGameState, b = st.budget;
         const total = (humanBid || 0) + (this.players.length - 1) * Math.floor(b / this.players.length);
         if (total <= b) {
-          st.coins[this.players[0].id] += (humanBid || 0);
-          this.players.slice(1).forEach(p => st.coins[p.id] += Math.floor(b / this.players.length));
+          st.coins[this.myPlayerId] += (humanBid || 0);
+          this.players.filter(p => p.id !== this.myPlayerId).forEach(p => st.coins[p.id] += Math.floor(b / this.players.length));
         }
         st.round++;
         if (st.round <= 3) this.renderGreedyTreasure();
@@ -1399,7 +1555,7 @@
           <div class="cards-row" style="margin:10px 0;">${st.unplaced.map((c, i) => `<div class="deck-playing-card interactive" onclick="game.placeMem(${i})">${c}</div>`).join('')}</div>
           <button class="success" style="width:100%;" onclick="game.finishMem()">Submit Arrangement</button>
         `;
-        this.startAfkTimer(this.players[0].id, () => this.finishMem());
+        this.startAfkTimer(this.myPlayerId, () => this.finishMem());
       }
       placeMem(idx) {
         const st = this.miniGameState, empty = st.slots.indexOf(null);
@@ -1414,12 +1570,12 @@
         const st = this.miniGameState;
         for (let i = 0; i < 10; i++) if (!st.slots[i] && st.unplaced.length) st.slots[i] = st.unplaced.pop();
         let humanSc = st.slots.filter((c, i) => c === st.target[i]).length;
-        const res = [{ id: this.players[0].id, sc: humanSc }];
-        this.players.slice(1).forEach(b => res.push({ id: b.id, sc: 3 + Math.floor(Math.random() * 6) }));
+        const res = [{ id: this.myPlayerId, sc: humanSc }];
+        this.players.filter(p => p.id !== this.myPlayerId).forEach(b => res.push({ id: b.id, sc: 3 + Math.floor(Math.random() * 6) }));
         res.sort((a,b) => b.sc - a.sc);
         this.setPendingResults([res[0].id], [res[res.length - 1].id], 1, 1);
         document.getElementById('arena-panel').innerHTML = `
-          <div class="arena-header"><h2>🧠 Results (Your Score: ${humanSc}/10)</h2></div>
+          <div class="arena-header"><h2>🧠 Memory Results (Your Score: ${humanSc}/10)</h2></div>
           <div style="background:#090e17; padding:10px; border-radius:8px;">${res.map(r => `<div>${this.players.find(p=>p.id===r.id).name}: <strong>${r.sc}/10</strong></div>`).join('')}</div>
           <div id="auto-advance-display"></div>
           <button class="success" style="width:100%; margin-top:10px;" onclick="game.applyPendingResults()">Proceed</button>
@@ -1442,8 +1598,8 @@
             <div class="tile-header"><span>#${i}</span>${this.milestones.includes(i)?'<span class="tile-badge">⭐ CARD</span>':i===0?'START':i===this.maxPos?'GOAL':''}</div>
             <div class="tile-occupants">
               ${occ.map(p => `
-                <div class="avatar-token ${p.isHuman?'is-human-token':''}" style="border-color:${p.color};">
-                  ${p.isHuman?'<span class="token-label-you">YOU</span>':''}
+                <div class="avatar-token ${p.id===this.myPlayerId?'is-human-token':''}" style="border-color:${p.color};">
+                  ${p.id===this.myPlayerId?'<span class="token-label-you">YOU</span>':''}
                   ${getCharacterAvatarSVG(p.char.id, 24)}
                 </div>
               `).join('')}
@@ -1455,7 +1611,7 @@
 
       renderPlayers() {
         document.getElementById('players-list').innerHTML = this.players.map(p => `
-          <div class="player-card ${p.isHuman?'is-human':''}">
+          <div class="player-card ${p.id===this.myPlayerId?'is-human':''}">
             <div class="player-header">
               <div class="player-info">
                 <div class="avatar-frame" style="border-color:${p.color};">${getCharacterAvatarSVG(p.char.id, 38)}</div>
@@ -1496,7 +1652,7 @@
       }
     }
 
-    /* ENGINE INITIALIZATION */
+    /* INITIALIZATION */
     let game;
     function initGameEngine() {
       if (!game) {
