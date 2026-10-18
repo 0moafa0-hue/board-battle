@@ -59,12 +59,6 @@ Html
     .player-header { display: flex; align-items: center; justify-content: space-between; }
     .player-info { display: flex; align-items: center; gap: 10px; }
     .avatar-frame { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: #090e17; border: 2px solid var(--border); overflow: hidden; flex-shrink: 0; }
-    .status-tags { display: flex; flex-wrap: wrap; gap: 4px; }
-    .tag { font-size: 0.65rem; padding: 2px 7px; border-radius: 5px; background: #1e293b; font-weight: 700; border: 1px solid rgba(255,255,255,0.08); }
-    .tag.green { background: #064e3b; color: #6ee7b7; }
-    .tag.gold { background: #78350f; color: #fde68a; }
-    .tag.purple { background: #4c1d95; color: #e9d5ff; }
-    .tag.red { background: #7f1d1d; color: #fca5a5; }
     .arena-panel { background: var(--card-bg); border: 2px solid var(--border); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 14px; min-height: 440px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
     .arena-header { border-bottom: 1px solid var(--border); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
     .log-panel { background: var(--panel-bg); border: 1px solid var(--border); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; max-height: 520px; }
@@ -76,36 +70,28 @@ Html
     .modal-overlay { position: fixed; inset: 0; background: rgba(4, 7, 13, 0.88); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 12px; }
     .modal { background: #131b2e; border: 1.5px solid var(--border); border-radius: 18px; max-width: 520px; width: 100%; padding: 22px; box-shadow: 0 16px 50px rgba(0,0,0,0.85); max-height: 90vh; overflow-y: auto; }
     .cards-row { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
-    .deck-playing-card { background: white; color: #0f172a; border-radius: 8px; width: 56px; height: 84px; display: flex; flex-direction: column; justify-content: space-between; padding: 5px 6px; font-weight: bold; font-size: 0.75rem; border: 1.5px solid #cbd5e1; user-select: none; touch-action: manipulation; }
+    .deck-playing-card {
+      background: white; color: #0f172a; border-radius: 8px; width: 56px; height: 84px; display: flex; flex-direction: column; justify-content: space-between; padding: 5px 6px; font-weight: bold; font-size: 0.75rem; border: 1.5px solid #cbd5e1; user-select: none; touch-action: manipulation;
+    }
     .deck-playing-card.red { color: #dc2626; }
-    .deck-playing-card.joker { background: linear-gradient(135deg, #fef3c7, #fde68a); border: 2px solid var(--gold); color: #78350f; }
-    .deck-playing-card.trap { background: linear-gradient(135deg, #450a0a, #1c1917); border: 2px solid var(--red); color: #fca5a5; }
     .deck-playing-card.gold-card { background: linear-gradient(135deg, #fef08a, #f59e0b); border: 2px solid #b45309; color: #78350f; }
     .deck-playing-card.interactive { cursor: pointer; }
     .grid-pick { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin: 10px 0; }
-    .mystery-card { background: #1e293b; color: white; aspect-ratio: 2/3; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; cursor: pointer; border: 1.5px solid #334155; touch-action: manipulation; }
+    .mystery-card {
+      background: #1e293b; color: white; aspect-ratio: 2/3; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; cursor: pointer; border: 1.5px solid #334155; touch-action: manipulation;
+    }
     .mystery-card.revealed { background: #0f172a; border-color: var(--accent); }
-    .card-presentation { background: #090e17; border: 3px solid; border-radius: 14px; padding: 16px; text-align: center; margin: 12px 0; }
-    .card-presentation.Legendary { border-color: var(--gold); box-shadow: 0 0 16px var(--gold-glow); }
-    .card-presentation.Rare { border-color: var(--purple); }
-    .card-presentation.Good { border-color: var(--green); }
-    .card-presentation.Bad { border-color: var(--red); }
     .segmented-control { display: flex; background: #090e17; border: 1.5px solid var(--border); border-radius: 10px; padding: 4px; gap: 4px; margin-top: 6px; }
     .segmented-btn { flex: 1; padding: 8px 4px; font-size: 0.85rem; border-radius: 8px; background: transparent; color: var(--text-muted); border: none; min-height: 40px; }
     .segmented-btn.active { background: var(--accent); color: white; font-weight: 800; }
     .memory-slots-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin: 10px 0; }
     .memory-slot { aspect-ratio: 2/3; border: 2px dashed #475569; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #090e17; cursor: pointer; }
-
-    /* Felt Table */
     .poker-table-surface { background: radial-gradient(ellipse at center, #065f46 0%, #022c22 65%, #011913 100%); border: 8px solid #3b2818; outline: 2px solid #78350f; border-radius: 120px; padding: 16px 12px; box-shadow: 0 16px 35px rgba(0,0,0,0.8); margin: 10px 0; }
     .table-seats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(115px, 1fr)); gap: 8px; margin-bottom: 12px; }
     .table-seat { background: rgba(15, 23, 42, 0.88); border: 2px solid #334155; border-radius: 12px; padding: 8px 6px; text-align: center; position: relative; }
-    .table-seat.is-neighbor-draw { border-color: #38bdf8; background: rgba(14, 42, 71, 0.95); }
     .radar-sign { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); padding: 3px 8px; border-radius: 20px; font-size: 0.65rem; font-weight: 900; white-space: nowrap; }
     .radar-sign.joker-sign { background: linear-gradient(135deg, #fef08a, #f59e0b); color: #78350f; border: 1.5px solid #fff; }
     .radar-sign.trap-sign { background: linear-gradient(135deg, #ef4444, #991b1b); color: #fff; border: 1.5px solid #fca5a5; }
-
-    /* Circular Wheel of Fortune */
     .wheel-arena { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 0; position: relative; }
     .wheel-outer-stage { position: relative; width: 280px; height: 280px; margin: 10px auto; }
     .wheel-arrow-indicator {
@@ -136,7 +122,7 @@ Html
     </div>
   </div>
 
-  <!-- MAIN APP -->
+  <!-- GAME APP -->
   <div id="game-app">
     <header>
       <div class="header-title">
@@ -270,7 +256,7 @@ Html
     ];
 
     /* =====================================================================
-       MULTIPLAYER ENGINE WITH SYNCHRONIZED TURNS
+       AUTHORITATIVE MULTIPLAYER GAME ENGINE
        ===================================================================== */
     class BoardGameEngine {
       constructor() {
@@ -301,6 +287,7 @@ Html
         this.myPlayerName = 'You';
         this.lobbyMembers = [];
         this.onlineMoves = {};
+        this.readyForNext = {};
         this.afkTimer = null;
         this.afkSecondsLeft = 45;
         this.autoAdvanceTimer = null;
@@ -355,7 +342,7 @@ Html
           this.log(`⚠️ ${p.name} was AFK (45s)! Move made automatically. (Warning 1/2)`, 'loss');
           if (fallbackFn) fallbackFn();
         } else {
-          this.log(`🚫 ${p.name} timed out twice! Permanently replaced by AI Bot.`, 'loss');
+          this.log(`🚫 ${p.name} timed out twice! Converted to AI Bot.`, 'loss');
           p.isHuman = false;
           p.name = `Bot (${p.name})`;
           this.renderPlayers();
@@ -473,14 +460,14 @@ Html
         `;
       }
 
-      /* HOST ROOM SETTINGS */
+      /* STEP 1: HOST SETTINGS FIRST */
       showCreateRoomSettings() {
         const modal = document.getElementById('modal-container');
         modal.innerHTML = `
           <div class="modal-overlay">
             <div class="modal" style="text-align:center;">
-              <h2 style="font-size:1.5rem; color:var(--gold); margin-bottom:4px;">🏠 Create Room Settings</h2>
-              <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:14px;">Configure options before generating code:</p>
+              <h2 style="font-size:1.5rem; color:var(--gold); margin-bottom:4px;">🏠 Room Settings</h2>
+              <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:14px;">Configure match parameters before generating code:</p>
               
               <div style="margin-bottom:12px; text-align:left;">
                 <label style="font-size:0.8rem; font-weight:700;">YOUR HOST NAME:</label>
@@ -515,6 +502,7 @@ Html
         `;
       }
 
+      /* STEP 2: GENERATE ROOM & OPEN LOBBY */
       confirmAndCreateHostRoom() {
         const nameInput = document.getElementById('host-name-input');
         if (nameInput) this.myPlayerName = nameInput.value.trim() || 'Host';
@@ -527,6 +515,7 @@ Html
         this.roomCode = Math.floor(100000 + Math.random() * 900000).toString();
         if (this.peer) this.peer.destroy();
 
+        // Reliable STUN servers for cross-network WebRTC connectivity
         this.peer = new Peer(`bb-arena-${this.roomCode}`, {
           config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:global.stun.twilio.com:3478' }] }
         });
@@ -543,6 +532,9 @@ Html
               this.renderHostLobbyView();
             } else if (data.type === 'CLIENT_MOVE') {
               this.receiveClientMove(data.playerId, data.moveData);
+            } else if (data.type === 'CLIENT_READY_NEXT') {
+              this.readyForNext[data.playerId] = true;
+              this.checkAllReadyNext();
             }
           });
         });
@@ -559,7 +551,7 @@ Html
               <div style="background:#090e17; border:1px solid var(--border); border-radius:12px; padding:12px; margin-bottom:14px; text-align:left;">
                 <div style="font-size:0.85rem; font-weight:800; margin-bottom:8px; display:flex; justify-content:space-between;">
                   <span>Contenders (${this.lobbyMembers.length}/${this.selectedPlayerCount}):</span>
-                  <span style="color:#38bdf8;">Remaining will be Bots</span>
+                  <span style="color:#38bdf8;">Unfilled slots will be Bots</span>
                 </div>
                 ${this.lobbyMembers.map(m => `
                   <div style="background:#131b2e; padding:6px 10px; border-radius:6px; font-size:0.85rem; margin-bottom:4px; display:flex; justify-content:space-between;">
@@ -611,7 +603,7 @@ Html
         const code = document.getElementById('join-code-input').value.trim();
         const nameInput = document.getElementById('join-name-input');
         if (nameInput) this.myPlayerName = nameInput.value.trim() || 'Guest';
-        if (code.length < 6) return alert("Enter valid 6-digit code.");
+        if (code.length < 6) return alert("Enter valid 6-digit room code.");
         document.getElementById('join-status-banner').style.display = 'block';
 
         this.isOnline = true;
@@ -644,11 +636,10 @@ Html
               if (myP) this.myPlayerId = myP.id;
               this.renderAll();
               this.startMiniGameRoulette(d.targetGameId);
-            } else if (d.type === 'SYNC_MINIGAME') {
-              this.miniGameState = d.miniGameState;
-              this.renderActiveMiniGame();
-            } else if (d.type === 'RESULTS_SHOW') {
-              this.setPendingResults(d.w, d.l, d.winR, d.loseP);
+            } else if (d.type === 'AUTHORITATIVE_SYNC') {
+              this.applyAuthoritativeSync(d);
+            } else if (d.type === 'ROULETTE_SPIN') {
+              this.startMiniGameRoulette(d.targetGameId);
             }
           });
         });
@@ -699,8 +690,46 @@ Html
           this.stopAfkTimer();
           this.resolveActiveMiniGameOnline();
         } else {
+          this.syncAuthoritativeState();
           this.renderActiveMiniGame();
         }
+      }
+
+      /* FULL CLIENT AUTHORITATIVE STATE RECEIVER */
+      applyAuthoritativeSync(d) {
+        this.players = d.players;
+        this.round = d.round;
+        this.status = d.status;
+        this.currentMiniGame = d.currentMiniGame;
+        this.miniGameState = d.miniGameState;
+        this.onlineMoves = d.onlineMoves || {};
+        this.pendingResults = d.pendingResults;
+        this.renderAll();
+
+        if (this.status === 'MINIGAME') {
+          this.renderActiveMiniGame();
+        } else if (this.status === 'RESULTS') {
+          this.renderResultsScreen(d.resultsPayload);
+          this.startResultsAutoTimer(10, () => {
+            if (this.isHost) this.applyPendingResults();
+          });
+        }
+      }
+
+      syncAuthoritativeState(extra = {}) {
+        if (!this.isHost) return;
+        const payload = {
+          type: 'AUTHORITATIVE_SYNC',
+          players: this.players,
+          round: this.round,
+          status: this.status,
+          currentMiniGame: this.currentMiniGame,
+          miniGameState: this.miniGameState,
+          onlineMoves: this.onlineMoves,
+          pendingResults: this.pendingResults,
+          ...extra
+        };
+        this.broadcast(payload);
       }
 
       startOnlineGameFromLobby() {
@@ -866,6 +895,7 @@ Html
         });
         this.renderPlayers();
         this.renderBoard();
+        if (this.isHost) this.syncAuthoritativeState();
       }
 
       showThiefDoubleModal(c1, s) {
@@ -1068,12 +1098,57 @@ Html
         else if (mgId === 'mg8') this.renderMemoryHuntPreview();
       }
 
+      /* 10-SECOND AUTOMATIC RESULTS RESOLUTION */
       setPendingResults(w, l, winR = 1, loseP = 1) {
         this.pendingResults = { winners: Array.from(new Set(w)), losers: Array.from(new Set(l)), winReward: winR, losePenalty: loseP };
+        this.status = 'RESULTS';
+        this.readyForNext = {};
+
         if (this.isHost) {
-          this.broadcast({ type: 'RESULTS_SHOW', w, l, winR, loseP });
+          this.syncAuthoritativeState({ resultsPayload: { w, l } });
         }
-        this.startResultsAutoTimer(10, () => this.applyPendingResults());
+        this.startResultsAutoTimer(10, () => {
+          if (this.isHost || !this.isOnline) this.applyPendingResults();
+        });
+      }
+
+      renderResultsScreen(data) {
+        const w = data.w, l = data.l;
+        document.getElementById('arena-panel').innerHTML = `
+          <div class="arena-header"><h2>🎯 Round Results</h2></div>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:8px; margin:12px 0;">
+            ${this.players.map(p => `
+              <div style="background:#090e17; padding:8px; border-radius:8px; border:2px solid ${w.includes(p.id)?'var(--green)':l.includes(p.id)?'var(--red)':'#1e293b'};">
+                <strong style="color:${p.color};">${p.name}</strong>
+                <div style="font-size:0.8rem; margin-top:2px;">
+                  ${w.includes(p.id) ? '🏆 WINNER (+1)' : l.includes(p.id) ? '❌ LOSER (-1)' : 'Stays'}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+          <div id="auto-advance-display"></div>
+          <button class="success" style="width:100%; margin-top:10px;" onclick="game.clientReadyForNext()">
+            Proceed (${Object.keys(this.readyForNext).length}/${this.players.filter(p=>p.isHuman).length} Ready)
+          </button>
+        `;
+      }
+
+      clientReadyForNext() {
+        this.readyForNext[this.myPlayerId] = true;
+        if (this.isOnline && !this.isHost && this.hostConn) {
+          this.hostConn.send({ type: 'CLIENT_READY_NEXT', playerId: this.myPlayerId });
+        } else if (this.isHost) {
+          this.checkAllReadyNext();
+        }
+      }
+
+      checkAllReadyNext() {
+        const realPlayers = this.players.filter(p => p.isHuman);
+        const allReady = realPlayers.every(p => this.readyForNext[p.id]);
+        if (allReady && (this.isHost || !this.isOnline)) {
+          this.clearActiveTimers();
+          this.applyPendingResults();
+        }
       }
 
       applyPendingResults() {
@@ -1135,11 +1210,18 @@ Html
           </div>
         `;
         this.renderAll();
-        this.startResultsAutoTimer(5, () => this.startMiniGameRoulette());
+
+        if (this.isHost) {
+          const nextGame = MINI_GAMES[Math.floor(Math.random() * MINI_GAMES.length)];
+          this.broadcast({ type: 'ROULETTE_SPIN', targetGameId: nextGame.id });
+          this.startResultsAutoTimer(5, () => this.startMiniGameRoulette(nextGame.id));
+        } else if (!this.isOnline) {
+          this.startResultsAutoTimer(5, () => this.startMiniGameRoulette());
+        }
       }
 
       /* =====================================================================
-         MINI-GAME IMPLEMENTATIONS (SYNCHRONIZED AUTHORITATIVELY)
+         MINI-GAMES (AUTHORITATIVELY HOSTED)
          ===================================================================== */
       /* 1. Blackjack */
       setupBlackjackHost() {
@@ -1150,7 +1232,7 @@ Html
         d.sort(() => Math.random() - 0.5);
 
         this.miniGameState = { deck: d, bj: this.players.map(p => ({ p, hand: [d.pop(), d.pop()], stand: false })) };
-        if (this.isHost) this.broadcast({ type: 'SYNC_MINIGAME', miniGameState: this.miniGameState });
+        if (this.isHost) this.syncAuthoritativeState();
         this.renderBlackjack();
         this.startAfkTimer(this.myPlayerId, () => this.bjStand());
       }
@@ -1177,7 +1259,7 @@ Html
             </div>
           </div>
           <div style="margin-top:10px; font-size:0.8rem; color:var(--text-muted);">
-            Contenders: ${st.bj.map(b => `${b.p.name}: ${b.stand ? 'Ready ✓' : 'Thinking...'}`).join(' | ')}
+            Contenders: ${st.bj.map(b => `${b.p.name}: ${this.onlineMoves[b.p.id] || b.stand ? 'Ready ✓' : 'Thinking...'}`).join(' | ')}
           </div>
           <div id="auto-advance-display"></div>
         `;
@@ -1218,21 +1300,14 @@ Html
         if (l.length === 0 && valid.length > 0) l.push(valid[valid.length - 1].id);
 
         this.setPendingResults(w, l, 1, 1);
-        document.getElementById('arena-panel').innerHTML = `
-          <div class="arena-header"><h2>🃏 Blackjack Results</h2></div>
-          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:6px; margin:10px 0;">
-            ${scored.map(s => `<div style="background:#090e17; padding:8px; border-radius:6px; border:1px solid ${w.includes(s.id)?'var(--green)':l.includes(s.id)?'var(--red)':'#334155'};"><strong>${s.name}</strong><div>Score: ${s.sc} ${s.b?'(BUST)':''}</div></div>`).join('')}
-          </div>
-          <div id="auto-advance-display"></div>
-          <button class="success" style="width:100%; margin-top:10px;" onclick="game.applyPendingResults()">Proceed</button>
-        `;
+        this.renderResultsScreen({ w, l });
       }
 
       /* 2. Think Box */
       setupThinkBoxHost() {
         const q = { q: 'Pick a Superpower', options: ['Flight', 'Invisibility', 'Time Travel', 'Telekinesis'] };
         this.miniGameState = { q, votes: {} };
-        if (this.isHost) this.broadcast({ type: 'SYNC_MINIGAME', miniGameState: this.miniGameState });
+        if (this.isHost) this.syncAuthoritativeState();
         this.renderThinkBox();
         this.startAfkTimer(this.myPlayerId, () => this.pickThinkBox(q.options[0]));
       }
@@ -1245,6 +1320,9 @@ Html
             <div style="display:grid; grid-template-columns:1fr; gap:8px; margin-top:10px;">
               ${q.options.map(opt => `<button class="secondary" style="justify-content:flex-start;" onclick="game.pickThinkBox('${opt}')">${opt}</button>`).join('')}
             </div>
+          </div>
+          <div style="margin-top:10px; font-size:0.8rem; color:var(--text-muted);">
+            Contenders: ${this.players.map(p => `${p.name}: ${this.onlineMoves[p.id] ? 'Locked In ✓' : 'Thinking...'}`).join(' | ')}
           </div>
         `;
       }
@@ -1278,19 +1356,14 @@ Html
         const losers = this.players.filter(p => counts[votes[p.id]] === max).map(p => p.id);
 
         this.setPendingResults(winners, losers, 2, 1);
-        document.getElementById('arena-panel').innerHTML = `
-          <div class="arena-header"><h2>📦 Think Box Results</h2></div>
-          <div style="background:#090e17; padding:10px; border-radius:8px;">${Object.entries(counts).map(([k,v]) => `<div><strong>${k}</strong>: ${v} votes</div>`).join('')}</div>
-          <div id="auto-advance-display"></div>
-          <button class="success" style="width:100%; margin-top:10px;" onclick="game.applyPendingResults()">Proceed</button>
-        `;
+        this.renderResultsScreen({ w: winners, l: losers });
       }
 
       /* 3. Push Luck */
       setupPushLuckHost() {
         const pool = [-6,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10,-5,6].sort(() => Math.random() - 0.5);
         this.miniGameState = { pool, picks: [] };
-        if (this.isHost) this.broadcast({ type: 'SYNC_MINIGAME', miniGameState: this.miniGameState });
+        if (this.isHost) this.syncAuthoritativeState();
         this.renderPushLuck();
         this.startAfkTimer(this.myPlayerId, () => {
           while (this.miniGameState.picks.length < 3) this.miniGameState.picks.push(this.miniGameState.picks.length);
@@ -1303,6 +1376,9 @@ Html
           <div class="arena-header"><h2>🍀 Push Your Luck (18 Cards)</h2><span class="tag gold">Pick 3</span></div>
           <div class="grid-pick">${st.pool.map((v, i) => `<div class="mystery-card ${st.picks.includes(i)?'revealed':''}" onclick="game.pickPushLuck(${i})">${st.picks.includes(i)?(v>=0?'+'+v:v):'❓'}</div>`).join('')}</div>
           ${st.picks.length === 3 ? `<button class="success" style="width:100%;" onclick="game.finishPushLuck()">Lock In Score (${st.picks.reduce((a,b)=>a+st.pool[b],0)})</button>` : ''}
+          <div style="margin-top:10px; font-size:0.8rem; color:var(--text-muted);">
+            Contenders: ${this.players.map(p => `${p.name}: ${this.onlineMoves[p.id] ? 'Locked In ✓' : 'Thinking...'}`).join(' | ')}
+          </div>
         `;
       }
       pickPushLuck(i) {
@@ -1329,20 +1405,17 @@ Html
           return { id: p.id, sc };
         }).sort((a,b) => b.sc - a.sc);
 
-        this.setPendingResults([scored[0].id], [scored[scored.length - 1].id], 1, 1);
-        document.getElementById('arena-panel').innerHTML = `
-          <div class="arena-header"><h2>🍀 Push Luck Results</h2></div>
-          <div style="background:#090e17; padding:10px; border-radius:8px;">${scored.map(s => `<div>${this.players.find(p=>p.id===s.id).name}: <strong>${s.sc}</strong></div>`).join('')}</div>
-          <div id="auto-advance-display"></div>
-          <button class="success" style="width:100%; margin-top:10px;" onclick="game.applyPendingResults()">Proceed</button>
-        `;
+        const w = [scored[0].id];
+        const l = [scored[scored.length - 1].id];
+        this.setPendingResults(w, l, 1, 1);
+        this.renderResultsScreen({ w, l });
       }
 
       /* 4. Guess 15 */
       setupGuess15Host() {
         const secret = Math.floor(Math.random() * 10) + 1;
         this.miniGameState = { secret };
-        if (this.isHost) this.broadcast({ type: 'SYNC_MINIGAME', miniGameState: this.miniGameState });
+        if (this.isHost) this.syncAuthoritativeState();
         this.renderGuess15();
         this.startAfkTimer(this.myPlayerId, () => this.pickGuess15(5));
       }
@@ -1351,6 +1424,9 @@ Html
           <div class="arena-header"><h2>🎯 Completes 15</h2><span class="tag gold">Pick 1–10</span></div>
           <div style="background:#090e17; padding:14px; border-radius:10px; text-align:center;">
             <div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:6px;">${[1,2,3,4,5,6,7,8,9,10].map(n => `<button onclick="game.pickGuess15(${n})">${n}</button>`).join('')}</div>
+          </div>
+          <div style="margin-top:10px; font-size:0.8rem; color:var(--text-muted); text-align:center;">
+            Contenders: ${this.players.map(p => `${p.name}: ${this.onlineMoves[p.id] ? 'Locked In ✓' : 'Thinking...'}`).join(' | ')}
           </div>
         `;
       }
@@ -1372,13 +1448,10 @@ Html
           return { id: p.id, d: Math.abs(15 - (num + sec)), n: num };
         }).sort((a,b) => a.d - b.d);
 
-        this.setPendingResults([res[0].id], [res[res.length - 1].id], 1, 1);
-        document.getElementById('arena-panel').innerHTML = `
-          <div class="arena-header"><h2>🎯 Guess 15 Results (Hidden: ${sec})</h2></div>
-          <div style="background:#090e17; padding:10px; border-radius:8px;">${res.map(r => `<div>${this.players.find(p=>p.id===r.id).name}: Picked ${r.n} (Diff: ${r.d})</div>`).join('')}</div>
-          <div id="auto-advance-display"></div>
-          <button class="success" style="width:100%; margin-top:10px;" onclick="game.applyPendingResults()">Proceed</button>
-        `;
+        const w = [res[0].id];
+        const l = [res[res.length - 1].id];
+        this.setPendingResults(w, l, 1, 1);
+        this.renderResultsScreen({ w, l });
       }
 
       /* 5. Joker & Trap Exchange */
@@ -1389,7 +1462,7 @@ Html
         pool.sort(() => Math.random() - 0.5);
         this.players.forEach(p => hands[p.id] = [pool.pop(), pool.pop(), pool.pop(), pool.pop()]);
         this.miniGameState = { hands, round: 1 };
-        if (this.isHost) this.broadcast({ type: 'SYNC_MINIGAME', miniGameState: this.miniGameState });
+        if (this.isHost) this.syncAuthoritativeState();
         this.renderJokerTrap();
         this.startAfkTimer(this.myPlayerId, () => this.drawJokerTrap(0));
       }
@@ -1435,12 +1508,7 @@ Html
           const w = this.players.filter(p => st.hands[p.id].some(c => c.t==='JOKER')).map(p => p.id);
           const l = this.players.filter(p => st.hands[p.id].some(c => c.t==='TRAP')).map(p => p.id);
           this.setPendingResults(w, l, 1, 1);
-          document.getElementById('arena-panel').innerHTML = `
-            <div class="arena-header"><h2>🃏 Revealed Hands!</h2></div>
-            <div style="background:#090e17; padding:10px; border-radius:8px;">${this.players.map(p => `<div><strong>${p.name}</strong>: ${st.hands[p.id].map(c => c.t).join(', ')}</div>`).join('')}</div>
-            <div id="auto-advance-display"></div>
-            <button class="success" style="width:100%; margin-top:10px;" onclick="game.applyPendingResults()">Proceed</button>
-          `;
+          this.renderResultsScreen({ w, l });
         }
       }
 
@@ -1453,7 +1521,7 @@ Html
         this.players.forEach(p => hands[p.id] = [pool.pop(), pool.pop(), pool.pop(), pool.pop(), pool.pop()]);
         this.miniGameState = { hands, round: 1, scores: {} };
         this.players.forEach(p => this.miniGameState.scores[p.id] = 0);
-        if (this.isHost) this.broadcast({ type: 'SYNC_MINIGAME', miniGameState: this.miniGameState });
+        if (this.isHost) this.syncAuthoritativeState();
         this.renderHighCard();
         this.startAfkTimer(this.myPlayerId, () => this.playHighCard(0));
       }
@@ -1479,13 +1547,10 @@ Html
         if (st.round <= 5) this.renderHighCard();
         else {
           const sorted = this.players.map(p => ({ id: p.id, sc: st.scores[p.id] })).sort((a,b) => b.sc - a.sc);
-          this.setPendingResults([sorted[0].id], [sorted[sorted.length - 1].id], 1, 1);
-          document.getElementById('arena-panel').innerHTML = `
-            <div class="arena-header"><h2>🂡 Final Scores</h2></div>
-            <div style="background:#090e17; padding:10px; border-radius:8px;">${sorted.map(s => `<div>${this.players.find(p=>p.id===s.id).name}: ${s.sc} pts</div>`).join('')}</div>
-            <div id="auto-advance-display"></div>
-            <button class="success" style="width:100%; margin-top:10px;" onclick="game.applyPendingResults()">Proceed</button>
-          `;
+          const w = [sorted[0].id];
+          const l = [sorted[sorted.length - 1].id];
+          this.setPendingResults(w, l, 1, 1);
+          this.renderResultsScreen({ w, l });
         }
       }
 
@@ -1494,7 +1559,7 @@ Html
         const budget = this.players.length * 10;
         this.miniGameState = { budget, round: 1, coins: {} };
         this.players.forEach(p => this.miniGameState.coins[p.id] = 0);
-        if (this.isHost) this.broadcast({ type: 'SYNC_MINIGAME', miniGameState: this.miniGameState });
+        if (this.isHost) this.syncAuthoritativeState();
         this.renderGreedyTreasure();
         this.startAfkTimer(this.myPlayerId, () => this.bidGreedy(Math.floor(budget / 3)));
       }
@@ -1523,13 +1588,10 @@ Html
         if (st.round <= 3) this.renderGreedyTreasure();
         else {
           const sorted = this.players.map(p => ({ id: p.id, c: st.coins[p.id] })).sort((a,b) => b.c - a.c);
-          this.setPendingResults([sorted[0].id], [sorted[sorted.length - 1].id], 1, 1);
-          document.getElementById('arena-panel').innerHTML = `
-            <div class="arena-header"><h2>💰 Treasure Results</h2></div>
-            <div style="background:#090e17; padding:10px; border-radius:8px;">${sorted.map(s => `<div>${this.players.find(p=>p.id===s.id).name}: ${s.c} 🪙</div>`).join('')}</div>
-            <div id="auto-advance-display"></div>
-            <button class="success" style="width:100%; margin-top:10px;" onclick="game.applyPendingResults()">Proceed</button>
-          `;
+          const w = [sorted[0].id];
+          const l = [sorted[sorted.length - 1].id];
+          this.setPendingResults(w, l, 1, 1);
+          this.renderResultsScreen({ w, l });
         }
       }
 
@@ -1537,7 +1599,7 @@ Html
       setupMemoryHuntHost() {
         const cards = ['A♠','K♥','Q♦','J♣','10♠','9♥','8♦','7♣','6♠','5♥'].sort(() => Math.random() - 0.5);
         this.miniGameState = { target: cards, countdown: 10, slots: new Array(10).fill(null), unplaced: [...cards].sort(() => Math.random() - 0.5) };
-        if (this.isHost) this.broadcast({ type: 'SYNC_MINIGAME', miniGameState: this.miniGameState });
+        if (this.isHost) this.syncAuthoritativeState();
         this.renderMemoryHuntPreview();
       }
       renderMemoryHuntPreview() {
@@ -1585,13 +1647,10 @@ Html
         const res = [{ id: this.myPlayerId, sc: humanSc }];
         this.players.filter(p => p.id !== this.myPlayerId).forEach(b => res.push({ id: b.id, sc: 3 + Math.floor(Math.random() * 6) }));
         res.sort((a,b) => b.sc - a.sc);
-        this.setPendingResults([res[0].id], [res[res.length - 1].id], 1, 1);
-        document.getElementById('arena-panel').innerHTML = `
-          <div class="arena-header"><h2>🧠 Memory Results (Your Score: ${humanSc}/10)</h2></div>
-          <div style="background:#090e17; padding:10px; border-radius:8px;">${res.map(r => `<div>${this.players.find(p=>p.id===r.id).name}: <strong>${r.sc}/10</strong></div>`).join('')}</div>
-          <div id="auto-advance-display"></div>
-          <button class="success" style="width:100%; margin-top:10px;" onclick="game.applyPendingResults()">Proceed</button>
-        `;
+        const w = [res[0].id];
+        const l = [res[res.length - 1].id];
+        this.setPendingResults(w, l, 1, 1);
+        this.renderResultsScreen({ w, l });
       }
 
       /* =====================================================================
