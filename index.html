@@ -1,12 +1,10 @@
-code
-Html
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>Board Battle: AI Arena</title>
-  <!-- PeerJS with Google STUN Configuration -->
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
   <style>
     :root {
@@ -95,12 +93,11 @@ Html
     .poker-table-surface { background: radial-gradient(ellipse at center, #065f46 0%, #022c22 65%, #011913 100%); border: 8px solid #3b2818; outline: 2px solid #78350f; border-radius: 120px; padding: 16px 12px; box-shadow: 0 16px 35px rgba(0,0,0,0.8); margin: 10px 0; }
     .table-seats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(115px, 1fr)); gap: 8px; margin-bottom: 12px; }
     .table-seat { background: rgba(15, 23, 42, 0.88); border: 2px solid #334155; border-radius: 12px; padding: 8px 6px; text-align: center; position: relative; }
-    .table-seat.is-neighbor-draw { border-color: #38bdf8; background: rgba(14, 42, 71, 0.95); }
     .radar-sign { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); padding: 3px 8px; border-radius: 20px; font-size: 0.65rem; font-weight: 900; white-space: nowrap; }
     .radar-sign.joker-sign { background: linear-gradient(135deg, #fef08a, #f59e0b); color: #78350f; border: 1.5px solid #fff; }
     .radar-sign.trap-sign { background: linear-gradient(135deg, #ef4444, #991b1b); color: #fff; border: 1.5px solid #fca5a5; }
-    
-    /* Circular Wheel of Fortune */
+
+    /* Canvas Circular Roulette */
     .wheel-arena { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 0; position: relative; }
     .wheel-outer-stage { position: relative; width: 280px; height: 280px; margin: 10px auto; }
     .wheel-arrow-indicator {
@@ -113,9 +110,14 @@ Html
       border: 6px solid #78350f; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;
     }
     #roulette-canvas { width: 100%; height: 100%; display: block; border-radius: 50%; }
+
+    /* Status Bar and Locked Waiting Box */
+    .contender-status-bar { background: #090e17; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 0.8rem; margin-top: 8px; }
+    .locked-waiting-card {
+      background: #090e17; border: 2px dashed #3b82f6; border-radius: 14px; padding: 22px 14px; text-align: center; margin: 12px 0;
+    }
     .online-afk-badge { display: inline-flex; align-items: center; gap: 6px; background: #450a0a; border: 1px solid var(--red); color: #fca5a5; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 800; }
     .auto-advance-bar { background: #064e3b; border: 1px solid var(--green); border-radius: 8px; padding: 8px 12px; color: #a7f3d0; font-size: 0.85rem; font-weight: 700; text-align: center; margin-top: 10px; }
-    .contender-status-bar { background: #090e17; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 0.8rem; margin-top: 8px; }
   </style>
 </head>
 <body>
@@ -132,7 +134,7 @@ Html
     </div>
   </div>
 
-  <!-- MAIN APP -->
+  <!-- GAME APP -->
   <div id="game-app">
     <header>
       <div class="header-title">
@@ -296,7 +298,7 @@ Html
         this.myPlayerId = 0;
         this.myPlayerName = 'You';
         this.lobbyMembers = [];
-        this.onlineMoves = {};
+        this.onlineMoves = {}; // tracks real players who submitted moves
         this.readyForNext = {};
         this.afkTimer = null;
         this.afkSecondsLeft = 45;
@@ -352,7 +354,7 @@ Html
           this.log(`⚠️ ${p.name} was AFK (45s)! Move made automatically. (Warning 1/2)`, 'loss');
           if (fallbackFn) fallbackFn();
         } else {
-          this.log(`🚫 ${p.name} timed out twice! Converted to AI Bot.`, 'loss');
+          this.log(`🚫 ${p.name} timed out twice! Permanently replaced by AI Bot.`, 'loss');
           p.isHuman = false;
           p.name = `Bot (${p.name})`;
           this.renderPlayers();
@@ -364,7 +366,7 @@ Html
         if (this.autoAdvanceTimer) clearInterval(this.autoAdvanceTimer);
         let left = seconds;
         const container = document.getElementById('auto-advance-display');
-        if (container) container.innerHTML = `<div class="auto-advance-bar">⚡ Advancing in <span id="auto-cnt">${left}</span>s...</div>`;
+        if (container) container.innerHTML = `<div class="auto-advance-bar">⚡ Advancing to board in <span id="auto-cnt">${left}</span>s...</div>`;
 
         this.autoAdvanceTimer = setInterval(() => {
           left--;
@@ -391,7 +393,7 @@ Html
       clearLogs() { this.logs = []; this.renderLogs(); }
 
       /* =====================================================================
-         LOBBY & HOST SETTINGS WORKFLOW
+         MULTIPLAYER LOBBY & HOST SETTINGS FLOW
          ===================================================================== */
       resetPrompt() {
         this.clearActiveTimers();
@@ -476,7 +478,7 @@ Html
         modal.innerHTML = `
           <div class="modal-overlay">
             <div class="modal" style="text-align:center;">
-              <h2 style="font-size:1.5rem; color:var(--gold); margin-bottom:4px;">🏠 Room Settings</h2>
+              <h2 style="font-size:1.5rem; color:var(--gold); margin-bottom:4px;">🏠 Create Room Settings</h2>
               <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:14px;">Configure match parameters before generating code:</p>
               
               <div style="margin-bottom:12px; text-align:left;">
@@ -705,7 +707,7 @@ Html
         }
       }
 
-      /* FULL CLIENT AUTHORITATIVE STATE RECEIVER */
+      /* SYNCHRONIZE STATE TO CLIENT */
       applyAuthoritativeSync(d) {
         this.players = d.players;
         this.round = d.round;
@@ -1255,6 +1257,23 @@ Html
         const st = this.miniGameState;
         const myBj = st.bj.find(b => b.p.id === this.myPlayerId) || st.bj[0];
         const sc = this.calcBJ(myBj.hand);
+        const hasLockedIn = this.onlineMoves[this.myPlayerId] !== undefined || myBj.stand;
+
+        if (hasLockedIn && this.isOnline) {
+          document.getElementById('arena-panel').innerHTML = `
+            <div class="locked-waiting-card">
+              <div style="font-size:2.8rem; margin-bottom:6px;">✓</div>
+              <h2 style="color:var(--green); margin-bottom:4px;">Hand Locked In!</h2>
+              <p style="color:var(--text-muted); font-size:0.9rem;">Your Final Score: <strong style="color:var(--gold); font-size:1.3rem;">${sc}</strong></p>
+              <p style="color:#cbd5e1; font-size:0.85rem; margin-top:10px;">Waiting for other contenders to finish their turns...</p>
+              <div class="contender-status-bar" style="margin-top:14px; text-align:left;">
+                <strong>Contenders Status:</strong><br/>
+                ${st.bj.map(b => `• ${b.p.name}: ${this.onlineMoves[b.p.id] || b.stand ? '<span style="color:var(--green)">Locked In ✓</span>' : '<span style="color:var(--gold)">Thinking...</span>'}`).join('<br/>')}
+              </div>
+            </div>
+          `;
+          return;
+        }
 
         document.getElementById('arena-panel').innerHTML = `
           <div class="arena-header"><h2>🃏 Blackjack Showdown</h2><span class="tag gold">Top 2: +1 | Lowest: -1</span></div>
@@ -1289,6 +1308,7 @@ Html
         if (myBj) myBj.stand = true;
 
         if (this.isOnline && !this.isHost) {
+          this.onlineMoves[this.myPlayerId] = { stand: true, score: this.calcBJ(myBj.hand) };
           this.sendMoveToHost({ stand: true, score: this.calcBJ(myBj.hand) });
           this.renderBlackjack();
         } else {
@@ -1323,6 +1343,24 @@ Html
       }
       renderThinkBox() {
         const q = this.miniGameState.q;
+        const hasLockedIn = this.onlineMoves[this.myPlayerId] !== undefined;
+
+        if (hasLockedIn && this.isOnline) {
+          document.getElementById('arena-panel').innerHTML = `
+            <div class="locked-waiting-card">
+              <div style="font-size:2.8rem; margin-bottom:6px;">✓</div>
+              <h2 style="color:var(--green); margin-bottom:4px;">Choice Locked In!</h2>
+              <p style="color:var(--text-muted); font-size:0.9rem;">Your Pick: <strong style="color:var(--gold); font-size:1.15rem;">${this.onlineMoves[this.myPlayerId].opt}</strong></p>
+              <p style="color:#cbd5e1; font-size:0.85rem; margin-top:10px;">Waiting for other contenders to pick...</p>
+              <div class="contender-status-bar" style="margin-top:14px; text-align:left;">
+                <strong>Contenders Status:</strong><br/>
+                ${this.players.map(p => `• ${p.name}: ${this.onlineMoves[p.id] ? '<span style="color:var(--green)">Locked In ✓</span>' : '<span style="color:var(--gold)">Thinking...</span>'}`).join('<br/>')}
+              </div>
+            </div>
+          `;
+          return;
+        }
+
         document.getElementById('arena-panel').innerHTML = `
           <div class="arena-header"><h2>📦 Think Outside Box</h2><span class="tag gold">Least Popular: +2</span></div>
           <div style="background:#090e17; padding:14px; border-radius:10px;">
@@ -1338,11 +1376,11 @@ Html
       }
       pickThinkBox(opt) {
         this.stopAfkTimer();
+        this.onlineMoves[this.myPlayerId] = { opt };
         if (this.isOnline && !this.isHost) {
           this.sendMoveToHost({ opt });
-          document.getElementById('arena-panel').innerHTML = `<div style="padding:20px; text-align:center;"><h3>Choice locked: ${opt}</h3><p>Waiting for contenders...</p></div>`;
+          this.renderThinkBox();
         } else {
-          this.onlineMoves[this.myPlayerId] = { opt };
           if (!this.isOnline) this.resolveThinkBox();
           else this.checkAllOnlineMoves();
         }
@@ -1382,6 +1420,24 @@ Html
       }
       renderPushLuck() {
         const st = this.miniGameState;
+        const hasLockedIn = this.onlineMoves[this.myPlayerId] !== undefined;
+
+        if (hasLockedIn && this.isOnline) {
+          document.getElementById('arena-panel').innerHTML = `
+            <div class="locked-waiting-card">
+              <div style="font-size:2.8rem; margin-bottom:6px;">✓</div>
+              <h2 style="color:var(--green); margin-bottom:4px;">Score Locked In!</h2>
+              <p style="color:var(--text-muted); font-size:0.9rem;">Your Final Score: <strong style="color:var(--gold); font-size:1.3rem;">${this.onlineMoves[this.myPlayerId].score}</strong></p>
+              <p style="color:#cbd5e1; font-size:0.85rem; margin-top:10px;">Waiting for other contenders to lock in their scores...</p>
+              <div class="contender-status-bar" style="margin-top:14px; text-align:left;">
+                <strong>Contenders Status:</strong><br/>
+                ${this.players.map(p => `• ${p.name}: ${this.onlineMoves[p.id] ? '<span style="color:var(--green)">Locked In ✓</span>' : '<span style="color:var(--gold)">Thinking...</span>'}`).join('<br/>')}
+              </div>
+            </div>
+          `;
+          return;
+        }
+
         document.getElementById('arena-panel').innerHTML = `
           <div class="arena-header"><h2>🍀 Push Your Luck (18 Cards)</h2><span class="tag gold">Pick 3</span></div>
           <div class="grid-pick">${st.pool.map((v, i) => `<div class="mystery-card ${st.picks.includes(i)?'revealed':''}" onclick="game.pickPushLuck(${i})">${st.picks.includes(i)?(v>=0?'+'+v:v):'❓'}</div>`).join('')}</div>
@@ -1398,11 +1454,11 @@ Html
       finishPushLuck() {
         this.stopAfkTimer();
         const score = this.miniGameState.picks.reduce((a,b) => a + this.miniGameState.pool[b], 0);
+        this.onlineMoves[this.myPlayerId] = { score };
         if (this.isOnline && !this.isHost) {
           this.sendMoveToHost({ score });
-          document.getElementById('arena-panel').innerHTML = `<div style="padding:20px; text-align:center;"><h3>Score locked: ${score}</h3><p>Waiting for contenders...</p></div>`;
+          this.renderPushLuck();
         } else {
-          this.onlineMoves[this.myPlayerId] = { score };
           if (!this.isOnline) this.resolvePushLuck();
           else this.checkAllOnlineMoves();
         }
@@ -1430,6 +1486,24 @@ Html
         this.startAfkTimer(this.myPlayerId, () => this.pickGuess15(5));
       }
       renderGuess15() {
+        const hasLockedIn = this.onlineMoves[this.myPlayerId] !== undefined;
+
+        if (hasLockedIn && this.isOnline) {
+          document.getElementById('arena-panel').innerHTML = `
+            <div class="locked-waiting-card">
+              <div style="font-size:2.8rem; margin-bottom:6px;">✓</div>
+              <h2 style="color:var(--green); margin-bottom:4px;">Number Locked In!</h2>
+              <p style="color:var(--text-muted); font-size:0.9rem;">Your Pick: <strong style="color:var(--gold); font-size:1.3rem;">${this.onlineMoves[this.myPlayerId].n}</strong></p>
+              <p style="color:#cbd5e1; font-size:0.85rem; margin-top:10px;">Waiting for other contenders to pick...</p>
+              <div class="contender-status-bar" style="margin-top:14px; text-align:left;">
+                <strong>Contenders Status:</strong><br/>
+                ${this.players.map(p => `• ${p.name}: ${this.onlineMoves[p.id] ? '<span style="color:var(--green)">Locked In ✓</span>' : '<span style="color:var(--gold)">Thinking...</span>'}`).join('<br/>')}
+              </div>
+            </div>
+          `;
+          return;
+        }
+
         document.getElementById('arena-panel').innerHTML = `
           <div class="arena-header"><h2>🎯 Completes 15</h2><span class="tag gold">Pick 1–10</span></div>
           <div style="background:#090e17; padding:14px; border-radius:10px; text-align:center;">
@@ -1442,11 +1516,11 @@ Html
       }
       pickGuess15(n) {
         this.stopAfkTimer();
+        this.onlineMoves[this.myPlayerId] = { n };
         if (this.isOnline && !this.isHost) {
           this.sendMoveToHost({ n });
-          document.getElementById('arena-panel').innerHTML = `<div style="padding:20px; text-align:center;"><h3>Number ${n} locked</h3><p>Waiting for contenders...</p></div>`;
+          this.renderGuess15();
         } else {
-          this.onlineMoves[this.myPlayerId] = { n };
           if (!this.isOnline) this.resolveGuess15();
           else this.checkAllOnlineMoves();
         }
@@ -1537,25 +1611,71 @@ Html
       }
       renderHighCard() {
         const st = this.miniGameState, myHand = st.hands[this.myPlayerId] || st.hands[0];
+        const hasLockedIn = this.onlineMoves[this.myPlayerId] !== undefined;
+
+        if (hasLockedIn && this.isOnline) {
+          document.getElementById('arena-panel').innerHTML = `
+            <div class="locked-waiting-card">
+              <div style="font-size:2.8rem; margin-bottom:6px;">✓</div>
+              <h2 style="color:var(--green); margin-bottom:4px;">Card Locked In!</h2>
+              <p style="color:var(--text-muted); font-size:0.9rem;">Your Played Card: <strong style="color:var(--gold); font-size:1.3rem;">#${this.onlineMoves[this.myPlayerId].v}</strong></p>
+              <p style="color:#cbd5e1; font-size:0.85rem; margin-top:10px;">Waiting for other contenders to play their cards...</p>
+              <div class="contender-status-bar" style="margin-top:14px; text-align:left;">
+                <strong>Contenders Status:</strong><br/>
+                ${this.players.map(p => `• ${p.name}: ${this.onlineMoves[p.id] ? '<span style="color:var(--green)">Card Played ✓</span>' : '<span style="color:var(--gold)">Thinking...</span>'}`).join('<br/>')}
+              </div>
+            </div>
+          `;
+          return;
+        }
+
         document.getElementById('arena-panel').innerHTML = `
           <div class="arena-header"><h2>🂡 High Card (${st.round}/5)</h2><span class="tag gold">High: +3 | Low: -1</span></div>
           <div style="background:#090e17; padding:12px; border-radius:10px;">
             <h4>Your Hand:</h4>
             <div class="cards-row">${myHand.map((val, idx) => `<div class="deck-playing-card gold-card interactive" onclick="game.playHighCard(${idx})"><div style="text-align:center; font-size:1.6rem; margin:auto;">${val}</div></div>`).join('')}</div>
           </div>
+          <div class="contender-status-bar">
+            <strong>Contenders:</strong> ${this.players.map(p => `${p.name}: ${this.onlineMoves[p.id] ? '<span style="color:var(--green)">Card Played ✓</span>' : '<span style="color:var(--gold)">Thinking...</span>'}`).join(' | ')}
+          </div>
         `;
       }
       playHighCard(idx) {
         this.stopAfkTimer();
         const st = this.miniGameState;
-        const played = [{ id: this.myPlayerId, v: st.hands[this.myPlayerId].splice(idx, 1)[0] }];
-        this.players.filter(p => p.id !== this.myPlayerId).forEach(b => played.push({ id: b.id, v: st.hands[b.id].splice(0, 1)[0] }));
+        const v = st.hands[this.myPlayerId].splice(idx, 1)[0];
+        this.onlineMoves[this.myPlayerId] = { v };
+
+        if (this.isOnline && !this.isHost) {
+          this.sendMoveToHost({ v });
+          this.renderHighCard();
+        } else {
+          if (!this.isOnline) {
+            this.resolveHighCardRound();
+          } else {
+            this.checkAllOnlineMoves();
+          }
+        }
+      }
+      resolveHighCardRound() {
+        const st = this.miniGameState;
+        const played = this.players.map(p => {
+          let cardVal = (this.onlineMoves[p.id] && this.onlineMoves[p.id].v) 
+            ? this.onlineMoves[p.id].v 
+            : st.hands[p.id].splice(0, 1)[0];
+          return { id: p.id, v: cardVal };
+        });
+
         played.sort((a,b) => b.v - a.v);
         st.scores[played[0].id] += 3;
         st.scores[played[played.length - 1].id] -= 1;
+        this.onlineMoves = {};
         st.round++;
-        if (st.round <= 5) this.renderHighCard();
-        else {
+
+        if (st.round <= 5) {
+          if (this.isHost) this.syncAuthoritativeState();
+          this.renderHighCard();
+        } else {
           const sorted = this.players.map(p => ({ id: p.id, sc: st.scores[p.id] })).sort((a,b) => b.sc - a.sc);
           const w = [sorted[0].id];
           const l = [sorted[sorted.length - 1].id];
@@ -1575,6 +1695,24 @@ Html
       }
       renderGreedyTreasure() {
         const st = this.miniGameState;
+        const hasLockedIn = this.onlineMoves[this.myPlayerId] !== undefined;
+
+        if (hasLockedIn && this.isOnline) {
+          document.getElementById('arena-panel').innerHTML = `
+            <div class="locked-waiting-card">
+              <div style="font-size:2.8rem; margin-bottom:6px;">✓</div>
+              <h2 style="color:var(--green); margin-bottom:4px;">Request Submitted!</h2>
+              <p style="color:var(--text-muted); font-size:0.9rem;">Requested: <strong style="color:var(--gold); font-size:1.3rem;">${this.onlineMoves[this.myPlayerId].bid} 🪙</strong></p>
+              <p style="color:#cbd5e1; font-size:0.85rem; margin-top:10px;">Waiting for other contenders to submit...</p>
+              <div class="contender-status-bar" style="margin-top:14px; text-align:left;">
+                <strong>Contenders Status:</strong><br/>
+                ${this.players.map(p => `• ${p.name}: ${this.onlineMoves[p.id] ? '<span style="color:var(--green)">Submitted ✓</span>' : '<span style="color:var(--gold)">Thinking...</span>'}`).join('<br/>')}
+              </div>
+            </div>
+          `;
+          return;
+        }
+
         document.getElementById('arena-panel').innerHTML = `
           <div class="arena-header"><h2>💰 Greedy Treasure (${st.round}/3)</h2><span class="tag gold">Budget: ${st.budget}</span></div>
           <div style="background:#090e17; padding:14px; border-radius:10px; text-align:center;">
@@ -1584,19 +1722,52 @@ Html
               <button class="gold" style="flex:1;" onclick="game.bidGreedy(parseInt(document.getElementById('greedy-in').value))">Request Coins</button>
             </div>
           </div>
+          <div class="contender-status-bar">
+            <strong>Contenders:</strong> ${this.players.map(p => `${p.name}: ${this.onlineMoves[p.id] ? '<span style="color:var(--green)">Submitted ✓</span>' : '<span style="color:var(--gold)">Thinking...</span>'}`).join(' | ')}
+          </div>
         `;
       }
       bidGreedy(humanBid) {
         this.stopAfkTimer();
-        const st = this.miniGameState, b = st.budget;
-        const total = (humanBid || 0) + (this.players.length - 1) * Math.floor(b / this.players.length);
-        if (total <= b) {
-          st.coins[this.myPlayerId] += (humanBid || 0);
-          this.players.filter(p => p.id !== this.myPlayerId).forEach(p => st.coins[p.id] += Math.floor(b / this.players.length));
+        const bid = humanBid || 0;
+        this.onlineMoves[this.myPlayerId] = { bid };
+
+        if (this.isOnline && !this.isHost) {
+          this.sendMoveToHost({ bid });
+          this.renderGreedyTreasure();
+        } else {
+          if (!this.isOnline) {
+            this.resolveGreedyRound();
+          } else {
+            this.checkAllOnlineMoves();
+          }
         }
+      }
+      resolveGreedyRound() {
+        const st = this.miniGameState, b = st.budget;
+        let total = 0;
+        this.players.forEach(p => {
+          let bid = (this.onlineMoves[p.id] && this.onlineMoves[p.id].bid !== undefined) 
+            ? this.onlineMoves[p.id].bid 
+            : Math.floor(b / this.players.length);
+          total += bid;
+        });
+
+        if (total <= b) {
+          this.players.forEach(p => {
+            let bid = (this.onlineMoves[p.id] && this.onlineMoves[p.id].bid !== undefined) 
+              ? this.onlineMoves[p.id].bid 
+              : Math.floor(b / this.players.length);
+            st.coins[p.id] += bid;
+          });
+        }
+        this.onlineMoves = {};
         st.round++;
-        if (st.round <= 3) this.renderGreedyTreasure();
-        else {
+
+        if (st.round <= 3) {
+          if (this.isHost) this.syncAuthoritativeState();
+          this.renderGreedyTreasure();
+        } else {
           const sorted = this.players.map(p => ({ id: p.id, c: st.coins[p.id] })).sort((a,b) => b.c - a.c);
           const w = [sorted[0].id];
           const l = [sorted[sorted.length - 1].id];
@@ -1633,11 +1804,32 @@ Html
       }
       renderMemoryHuntReconstruct() {
         const st = this.miniGameState;
+        const hasLockedIn = this.onlineMoves[this.myPlayerId] !== undefined;
+
+        if (hasLockedIn && this.isOnline) {
+          document.getElementById('arena-panel').innerHTML = `
+            <div class="locked-waiting-card">
+              <div style="font-size:2.8rem; margin-bottom:6px;">✓</div>
+              <h2 style="color:var(--green); margin-bottom:4px;">Arrangement Submitted!</h2>
+              <p style="color:var(--text-muted); font-size:0.9rem;">Your Matches: <strong style="color:var(--gold); font-size:1.3rem;">${this.onlineMoves[this.myPlayerId].sc}/10</strong></p>
+              <p style="color:#cbd5e1; font-size:0.85rem; margin-top:10px;">Waiting for other contenders to submit their cards...</p>
+              <div class="contender-status-bar" style="margin-top:14px; text-align:left;">
+                <strong>Contenders Status:</strong><br/>
+                ${this.players.map(p => `• ${p.name}: ${this.onlineMoves[p.id] ? '<span style="color:var(--green)">Submitted ✓</span>' : '<span style="color:var(--gold)">Arranging...</span>'}`).join('<br/>')}
+              </div>
+            </div>
+          `;
+          return;
+        }
+
         document.getElementById('arena-panel').innerHTML = `
           <div class="arena-header"><h2>🧠 Place Cards in Order</h2></div>
           <div class="memory-slots-grid">${st.slots.map((c, i) => `<div class="memory-slot" onclick="game.removeMem(${i})">${c ? c : `#${i+1}`}</div>`).join('')}</div>
           <div class="cards-row" style="margin:10px 0;">${st.unplaced.map((c, i) => `<div class="deck-playing-card interactive" onclick="game.placeMem(${i})">${c}</div>`).join('')}</div>
           <button class="success" style="width:100%;" onclick="game.finishMem()">Submit Arrangement</button>
+          <div class="contender-status-bar">
+            <strong>Contenders:</strong> ${this.players.map(p => `${p.name}: ${this.onlineMoves[p.id] ? '<span style="color:var(--green)">Submitted ✓</span>' : '<span style="color:var(--gold)">Arranging...</span>'}`).join(' | ')}
+          </div>
         `;
         this.startAfkTimer(this.myPlayerId, () => this.finishMem());
       }
@@ -1653,12 +1845,30 @@ Html
         this.stopAfkTimer();
         const st = this.miniGameState;
         for (let i = 0; i < 10; i++) if (!st.slots[i] && st.unplaced.length) st.slots[i] = st.unplaced.pop();
-        let humanSc = st.slots.filter((c, i) => c === st.target[i]).length;
-        const res = [{ id: this.myPlayerId, sc: humanSc }];
-        this.players.filter(p => p.id !== this.myPlayerId).forEach(b => res.push({ id: b.id, sc: 3 + Math.floor(Math.random() * 6) }));
-        res.sort((a,b) => b.sc - a.sc);
-        const w = [res[0].id];
-        const l = [res[res.length - 1].id];
+        let sc = st.slots.filter((c, i) => c === st.target[i]).length;
+        this.onlineMoves[this.myPlayerId] = { sc };
+
+        if (this.isOnline && !this.isHost) {
+          this.sendMoveToHost({ sc });
+          this.renderMemoryHuntReconstruct();
+        } else {
+          if (!this.isOnline) {
+            this.resolveMemoryHunt();
+          } else {
+            this.checkAllOnlineMoves();
+          }
+        }
+      }
+      resolveMemoryHunt() {
+        const scored = this.players.map(p => {
+          let score = (this.onlineMoves[p.id] && this.onlineMoves[p.id].sc !== undefined) 
+            ? this.onlineMoves[p.id].sc 
+            : (3 + Math.floor(Math.random() * 6));
+          return { id: p.id, sc: score };
+        }).sort((a,b) => b.sc - a.sc);
+
+        const w = [scored[0].id];
+        const l = [scored[scored.length - 1].id];
         this.setPendingResults(w, l, 1, 1);
         this.renderResultsScreen({ w, l });
       }
@@ -1745,3 +1955,4 @@ Html
   </script>
 </body>
 </html>
+```
