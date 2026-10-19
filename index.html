@@ -6,6 +6,7 @@ Html
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>Board Battle: AI Arena</title>
+  <!-- PeerJS with Google STUN Configuration -->
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
   <style>
     :root {
@@ -81,6 +82,11 @@ Html
       background: #1e293b; color: white; aspect-ratio: 2/3; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; cursor: pointer; border: 1.5px solid #334155; touch-action: manipulation;
     }
     .mystery-card.revealed { background: #0f172a; border-color: var(--accent); }
+    .card-presentation { background: #090e17; border: 3px solid; border-radius: 14px; padding: 16px; text-align: center; margin: 12px 0; }
+    .card-presentation.Legendary { border-color: var(--gold); }
+    .card-presentation.Rare { border-color: var(--purple); }
+    .card-presentation.Good { border-color: var(--green); }
+    .card-presentation.Bad { border-color: var(--red); }
     .segmented-control { display: flex; background: #090e17; border: 1.5px solid var(--border); border-radius: 10px; padding: 4px; gap: 4px; margin-top: 6px; }
     .segmented-btn { flex: 1; padding: 8px 4px; font-size: 0.85rem; border-radius: 8px; background: transparent; color: var(--text-muted); border: none; min-height: 40px; }
     .segmented-btn.active { background: var(--accent); color: white; font-weight: 800; }
@@ -89,9 +95,12 @@ Html
     .poker-table-surface { background: radial-gradient(ellipse at center, #065f46 0%, #022c22 65%, #011913 100%); border: 8px solid #3b2818; outline: 2px solid #78350f; border-radius: 120px; padding: 16px 12px; box-shadow: 0 16px 35px rgba(0,0,0,0.8); margin: 10px 0; }
     .table-seats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(115px, 1fr)); gap: 8px; margin-bottom: 12px; }
     .table-seat { background: rgba(15, 23, 42, 0.88); border: 2px solid #334155; border-radius: 12px; padding: 8px 6px; text-align: center; position: relative; }
+    .table-seat.is-neighbor-draw { border-color: #38bdf8; background: rgba(14, 42, 71, 0.95); }
     .radar-sign { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); padding: 3px 8px; border-radius: 20px; font-size: 0.65rem; font-weight: 900; white-space: nowrap; }
     .radar-sign.joker-sign { background: linear-gradient(135deg, #fef08a, #f59e0b); color: #78350f; border: 1.5px solid #fff; }
     .radar-sign.trap-sign { background: linear-gradient(135deg, #ef4444, #991b1b); color: #fff; border: 1.5px solid #fca5a5; }
+    
+    /* Circular Wheel of Fortune */
     .wheel-arena { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 0; position: relative; }
     .wheel-outer-stage { position: relative; width: 280px; height: 280px; margin: 10px auto; }
     .wheel-arrow-indicator {
@@ -106,6 +115,7 @@ Html
     #roulette-canvas { width: 100%; height: 100%; display: block; border-radius: 50%; }
     .online-afk-badge { display: inline-flex; align-items: center; gap: 6px; background: #450a0a; border: 1px solid var(--red); color: #fca5a5; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 800; }
     .auto-advance-bar { background: #064e3b; border: 1px solid var(--green); border-radius: 8px; padding: 8px 12px; color: #a7f3d0; font-size: 0.85rem; font-weight: 700; text-align: center; margin-top: 10px; }
+    .contender-status-bar { background: #090e17; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 0.8rem; margin-top: 8px; }
   </style>
 </head>
 <body>
@@ -122,7 +132,7 @@ Html
     </div>
   </div>
 
-  <!-- GAME APP -->
+  <!-- MAIN APP -->
   <div id="game-app">
     <header>
       <div class="header-title">
@@ -256,7 +266,7 @@ Html
     ];
 
     /* =====================================================================
-       AUTHORITATIVE MULTIPLAYER GAME ENGINE
+       AUTHORITATIVE MULTIPLAYER ENGINE WITH SYNCHRONIZED TURNS
        ===================================================================== */
     class BoardGameEngine {
       constructor() {
@@ -551,7 +561,7 @@ Html
               <div style="background:#090e17; border:1px solid var(--border); border-radius:12px; padding:12px; margin-bottom:14px; text-align:left;">
                 <div style="font-size:0.85rem; font-weight:800; margin-bottom:8px; display:flex; justify-content:space-between;">
                   <span>Contenders (${this.lobbyMembers.length}/${this.selectedPlayerCount}):</span>
-                  <span style="color:#38bdf8;">Unfilled slots will be Bots</span>
+                  <span style="color:#38bdf8;">Remaining will be Bots</span>
                 </div>
                 ${this.lobbyMembers.map(m => `
                   <div style="background:#131b2e; padding:6px 10px; border-radius:6px; font-size:0.85rem; margin-bottom:4px; display:flex; justify-content:space-between;">
@@ -603,7 +613,7 @@ Html
         const code = document.getElementById('join-code-input').value.trim();
         const nameInput = document.getElementById('join-name-input');
         if (nameInput) this.myPlayerName = nameInput.value.trim() || 'Guest';
-        if (code.length < 6) return alert("Enter valid 6-digit room code.");
+        if (code.length < 6) return alert("Enter valid 6-digit code.");
         document.getElementById('join-status-banner').style.display = 'block';
 
         this.isOnline = true;
@@ -1258,8 +1268,8 @@ Html
               <button class="secondary" style="flex:1;" onclick="game.bjStand()" ${myBj.stand ? 'disabled':''}>Stand</button>
             </div>
           </div>
-          <div style="margin-top:10px; font-size:0.8rem; color:var(--text-muted);">
-            Contenders: ${st.bj.map(b => `${b.p.name}: ${this.onlineMoves[b.p.id] || b.stand ? 'Ready ✓' : 'Thinking...'}`).join(' | ')}
+          <div class="contender-status-bar">
+            <strong>Contenders:</strong> ${st.bj.map(b => `${b.p.name}: ${this.onlineMoves[b.p.id] || b.stand ? '<span style="color:var(--green)">Ready ✓</span>' : '<span style="color:var(--gold)">Thinking...</span>'}`).join(' | ')}
           </div>
           <div id="auto-advance-display"></div>
         `;
@@ -1321,8 +1331,8 @@ Html
               ${q.options.map(opt => `<button class="secondary" style="justify-content:flex-start;" onclick="game.pickThinkBox('${opt}')">${opt}</button>`).join('')}
             </div>
           </div>
-          <div style="margin-top:10px; font-size:0.8rem; color:var(--text-muted);">
-            Contenders: ${this.players.map(p => `${p.name}: ${this.onlineMoves[p.id] ? 'Locked In ✓' : 'Thinking...'}`).join(' | ')}
+          <div class="contender-status-bar">
+            <strong>Contenders:</strong> ${this.players.map(p => `${p.name}: ${this.onlineMoves[p.id] ? '<span style="color:var(--green)">Locked In ✓</span>' : '<span style="color:var(--gold)">Thinking...</span>'}`).join(' | ')}
           </div>
         `;
       }
@@ -1376,8 +1386,8 @@ Html
           <div class="arena-header"><h2>🍀 Push Your Luck (18 Cards)</h2><span class="tag gold">Pick 3</span></div>
           <div class="grid-pick">${st.pool.map((v, i) => `<div class="mystery-card ${st.picks.includes(i)?'revealed':''}" onclick="game.pickPushLuck(${i})">${st.picks.includes(i)?(v>=0?'+'+v:v):'❓'}</div>`).join('')}</div>
           ${st.picks.length === 3 ? `<button class="success" style="width:100%;" onclick="game.finishPushLuck()">Lock In Score (${st.picks.reduce((a,b)=>a+st.pool[b],0)})</button>` : ''}
-          <div style="margin-top:10px; font-size:0.8rem; color:var(--text-muted);">
-            Contenders: ${this.players.map(p => `${p.name}: ${this.onlineMoves[p.id] ? 'Locked In ✓' : 'Thinking...'}`).join(' | ')}
+          <div class="contender-status-bar">
+            <strong>Contenders:</strong> ${this.players.map(p => `${p.name}: ${this.onlineMoves[p.id] ? '<span style="color:var(--green)">Locked In ✓</span>' : '<span style="color:var(--gold)">Thinking...</span>'}`).join(' | ')}
           </div>
         `;
       }
@@ -1425,8 +1435,8 @@ Html
           <div style="background:#090e17; padding:14px; border-radius:10px; text-align:center;">
             <div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:6px;">${[1,2,3,4,5,6,7,8,9,10].map(n => `<button onclick="game.pickGuess15(${n})">${n}</button>`).join('')}</div>
           </div>
-          <div style="margin-top:10px; font-size:0.8rem; color:var(--text-muted); text-align:center;">
-            Contenders: ${this.players.map(p => `${p.name}: ${this.onlineMoves[p.id] ? 'Locked In ✓' : 'Thinking...'}`).join(' | ')}
+          <div class="contender-status-bar" style="text-align:center;">
+            <strong>Contenders:</strong> ${this.players.map(p => `${p.name}: ${this.onlineMoves[p.id] ? '<span style="color:var(--green)">Locked In ✓</span>' : '<span style="color:var(--gold)">Thinking...</span>'}`).join(' | ')}
           </div>
         `;
       }
