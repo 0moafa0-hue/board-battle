@@ -761,7 +761,7 @@
               case 'UPDATE_CONTENDER_BADGE':
                 this.onlineMoves[Number(d.playerId)] = d.data; this.updateContenderBadgesOnly(); break;
               case 'RESULTS_SHOW':
-                this.stopTurnTimer(); this.setPendingResults(d.w, d.l, d.winR, d.loseP); break;
+                this.stopTurnTimer(); this.setPendingResults(d.w, d.l, d.winR, d.loseP, d.info); break;
               case 'STATE':
                 this.players = d.players; this.round = d.round; this.milestonesTriggered = d.milestonesTriggered;
                 document.getElementById('round-counter').innerText = `Round ${this.round}`;
@@ -1243,36 +1243,42 @@
       }
 
       /* RESULTS */
-      setPendingResults(w, l, winR = 1, loseP = 1) {
+      setPendingResults(w, l, winR = 1, loseP = 1, info = null) {
         if (this.status === 'RESULTS' || this.status === 'GAME_OVER') return;
         this.stopTurnTimer();
-        this.pendingResults = { winners: Array.from(new Set(w)), losers: Array.from(new Set(l)), winReward: winR, losePenalty: loseP };
+        this.pendingResults = { winners: Array.from(new Set(w)), losers: Array.from(new Set(l)), winReward: winR, losePenalty: loseP, info };
         this.status = 'RESULTS';
         this.readyForNext = {};
 
         if (this.isOnline && this.isHost) {
-          this.broadcast({ type: 'RESULTS_SHOW', w, l, winR, loseP });
+          this.broadcast({ type: 'RESULTS_SHOW', w, l, winR, loseP, info });
         }
-        this.renderResultsScreen({ w, l });
-        this.startResultsAutoTimer(10, () => {
+        this.renderResultsScreen({ w, l, info });
+        this.startResultsAutoTimer(15, () => {
           if (this.isHost || !this.isOnline) this.applyPendingResults();
         });
       }
 
       renderResultsScreen(data) {
-        const w = data.w, l = data.l;
-        document.getElementById('arena-panel').innerHTML = `
-          <div class="arena-header"><h2>🎯 Round Results</h2></div>
-          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:8px; margin:12px 0;">
-            ${this.players.map(p => `
-              <div style="background:#090e17; padding:8px; border-radius:8px; border:2px solid ${w.includes(p.id)?'var(--green)':l.includes(p.id)?'var(--red)':'#1e293b'};">
-                <strong style="color:${p.color};">${p.name}</strong>
-                <div style="font-size:0.8rem; margin-top:2px;">
-                  ${w.includes(p.id) ? '🏆 WINNER' : l.includes(p.id) ? '❌ LOSER' : 'Stays'}
-                </div>
+        const w = data.w, l = data.l, info = data.info || {}, det = info.details || {};
+        const cards = this.players.map(p => {
+          const win = w.includes(p.id), lose = l.includes(p.id) && !win;
+          const tag = win ? '🏆 WINNER' : lose ? '❌ LOSER' : '➖ Stays';
+          const col = win ? 'var(--green)' : lose ? 'var(--red)' : '#334155';
+          const me = Number(p.id) === Number(this.myPlayerId);
+          return `
+            <div style="background:#090e17; padding:10px; border-radius:10px; border:2px solid ${col};">
+              <div style="display:flex; justify-content:space-between; gap:6px; align-items:center;">
+                <strong style="color:${p.color};">${p.name}${me ? ' (you)' : ''}</strong>
+                <span style="font-size:0.78rem; font-weight:800;">${tag}</span>
               </div>
-            `).join('')}
-          </div>
+              <div style="font-size:0.82rem; margin-top:6px; color:#cbd5e1; line-height:1.4;">${det[p.id] !== undefined ? det[p.id] : ''}</div>
+            </div>`;
+        }).join('');
+        document.getElementById('arena-panel').innerHTML = `
+          <div class="arena-header"><h2>🎯 Round Results${this.currentMiniGame ? ' — ' + this.currentMiniGame.icon + ' ' + this.currentMiniGame.name : ''}</h2></div>
+          ${info.note ? `<div class="contender-status-bar" style="margin-top:0;">${info.note}</div>` : ''}
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:8px; margin:6px 0;">${cards}</div>
           <div id="auto-advance-display"></div>
         `;
       }
@@ -1450,7 +1456,14 @@
         const l = scored.filter(s => s.b).map(x => x.id);
         if (l.length === 0 && valid.length > 0) l.push(valid[valid.length - 1].id);
 
-        this.setPendingResults(w, l, 1, 1);
+        const details = {};
+        st.bj.forEach(b => {
+          const mv = this.onlineMoves[Number(b.p.id)];
+          const sc = this.calcBJ(b.hand);
+          details[b.p.id] = (mv && mv.forfeited) ? '⏱️ Timed out (counted as bust)'
+            : `${b.hand.map(c => c.v + c.s).join(' ')} = <strong>${sc}</strong>${sc > 21 ? ' 💥 BUST' : ''}`;
+        });
+        this.setPendingResults(w, l, 1, 1, { note: 'Closest to 21 wins (top 2). Busts lose; otherwise the lowest hand loses.', details });
       }
 
       /* 2. Think Box */
@@ -1522,7 +1535,10 @@
         const winners = this.players.filter(p => counts[votes[p.id]] === min && !forfeited(p)).map(p => p.id);
         const losers = this.players.filter(p => counts[votes[p.id]] === max || forfeited(p)).map(p => p.id);
 
-        this.setPendingResults(winners, losers, 2, 1);
+        const details = {};
+        this.players.forEach(p => { details[p.id] = forfeited(p) ? '⏱️ Timed out' : `Picked <strong>${votes[p.id]}</strong> (${counts[votes[p.id]]} voted for it)`; });
+        const note = 'Votes: ' + q.options.map(o => `${o} ×${counts[o]}`).join(' · ') + ' — least popular choice wins +2, most popular loses.';
+        this.setPendingResults(winners, losers, 2, 1, { note, details });
       }
 
       /* 3. Push Luck */
@@ -1578,13 +1594,16 @@
         }
       }
       resolvePushLuck() {
+        const details = {};
         const scored = this.players.map(p => {
           const move = this.onlineMoves[Number(p.id)];
-          const sc = (move && move.score !== undefined && !move.forfeited) ? move.score : (move && move.forfeited ? -99 : Math.floor(Math.random() * 12));
+          const forf = !!(move && move.forfeited);
+          const sc = (move && move.score !== undefined && !forf) ? move.score : (forf ? -99 : Math.floor(Math.random() * 12));
+          details[p.id] = forf ? '⏱️ Timed out (score −99)' : `Total score: <strong>${sc >= 0 ? '+' + sc : sc}</strong>`;
           return { id: p.id, sc };
         }).sort((a,b) => b.sc - a.sc);
 
-        this.setPendingResults([scored[0].id], [scored[scored.length - 1].id], 1, 1);
+        this.setPendingResults([scored[0].id], [scored[scored.length - 1].id], 1, 1, { note: 'Highest total of the 3 picked cards wins, lowest loses.', details });
       }
 
       /* 4. Guess 15 */
@@ -1634,14 +1653,17 @@
         }
       }
       resolveGuess15() {
-        const sec = this.miniGameState.secret;
+        const sec = this.miniGameState.secret, details = {};
         const res = this.players.map(p => {
           const move = this.onlineMoves[Number(p.id)];
-          const num = (move && move.n && !move.forfeited) ? move.n : Math.floor(Math.random()*4)+7;
-          return { id: p.id, d: move && move.forfeited ? 999 : Math.abs(15 - (num + sec)), n: num };
+          const forf = !!(move && move.forfeited);
+          const num = (move && move.n && !forf) ? move.n : Math.floor(Math.random()*4)+7;
+          const d = forf ? 999 : Math.abs(15 - (num + sec));
+          details[p.id] = forf ? '⏱️ Timed out' : `Picked <strong>${num}</strong> + secret ${sec} = <strong>${num + sec}</strong> (off by ${d})`;
+          return { id: p.id, d, n: num };
         }).sort((a,b) => a.d - b.d);
 
-        this.setPendingResults([res[0].id], [res[res.length - 1].id], 1, 1);
+        this.setPendingResults([res[0].id], [res[res.length - 1].id], 1, 1, { note: `🔒 The hidden number was <strong>${sec}</strong>. Closest total to 15 wins, farthest loses.`, details });
       }
 
       /* 5. Joker & Trap Exchange (everyone draws at the same time; host resolves) */
@@ -1710,7 +1732,12 @@
         else {
           const w = this.players.filter(p => st.hands[p.id].some(c => c.t === 'JOKER')).map(p => p.id);
           const l = this.players.filter(p => st.hands[p.id].some(c => c.t === 'TRAP')).map(p => p.id);
-          this.setPendingResults(w, l, 1, 1);
+          const details = {};
+          this.players.forEach(p => {
+            const hj = st.hands[p.id].some(c => c.t === 'JOKER'), ht = st.hands[p.id].some(c => c.t === 'TRAP');
+            details[p.id] = hj && ht ? '👑 Holds the JOKER and 💀 the TRAP' : hj ? '👑 Holds the JOKER' : ht ? '💀 Holds the TRAP' : 'Only normal cards';
+          });
+          this.setPendingResults(w, l, 1, 1, { note: 'After 3 exchanges: the Joker holder wins, the Trap holder loses.', details });
         }
       }
 
@@ -1748,7 +1775,7 @@
         document.getElementById('arena-panel').innerHTML = `
           <div class="arena-header"><h2>🂡 High Card (${st.round}/5)</h2><span class="tag gold">High: +3 | Low: -1</span></div>
           <div style="background:#090e17; padding:12px; border-radius:10px;">
-            <h4>Your Hand:</h4>
+            ${st.lastRound ? `<div class="contender-status-bar" style="margin:0 0 10px;">${st.lastRound}</div>` : ''}<h4>Your Hand:</h4>
             <div class="cards-row">${myHand.map((val, idx) => `<div class="deck-playing-card gold-card interactive" onclick="game.playHighCard(${idx})"><div style="text-align:center; font-size:1.6rem; margin:auto;">${val}</div></div>`).join('')}</div>
           </div>
           <div id="contender-live-bar" class="contender-status-bar"></div>
@@ -1774,18 +1801,25 @@
       }
       resolveHighCardRound() {
         const st = this.miniGameState;
+        st.played = st.played || {};
         const played = this.players.map(p => {
           const move = this.onlineMoves[Number(p.id)];
           let cardVal;
           if (move && move.v && !move.forfeited) { cardVal = move.v; const k = st.hands[p.id].indexOf(cardVal); if (k > -1) st.hands[p.id].splice(k, 1); }
           else if (move && move.forfeited) { cardVal = -99; st.hands[p.id].shift(); }
           else cardVal = st.hands[p.id].splice(0, 1)[0];
+          (st.played[p.id] = st.played[p.id] || []).push(cardVal);
           return { id: p.id, v: cardVal };
         });
 
+        const nameOf = id => this.players.find(x => Number(x.id) === Number(id)).name;
+        const showV = v => v === -99 ? '⏱️' : v;
         played.sort((a,b) => b.v - a.v);
-        st.scores[played[0].id] += 3;
-        st.scores[played[played.length - 1].id] -= 1;
+        const hi = played[0], lo = played[played.length - 1];
+        st.scores[hi.id] += 3;
+        st.scores[lo.id] -= 1;
+        const roundNo = st.round;
+        st.lastRound = `<strong>Round ${roundNo} cards:</strong> ` + played.map(x => `${nameOf(x.id)} <strong>${showV(x.v)}</strong>`).join(' · ') + `<br>🏆 ${nameOf(hi.id)} +3 &nbsp; ❌ ${nameOf(lo.id)} −1`;
         this.onlineMoves = {};
         st.round++;
 
@@ -1795,7 +1829,9 @@
           this.startTurnTimer(45);
         } else {
           const sorted = this.players.map(p => ({ id: p.id, sc: st.scores[p.id] })).sort((a,b) => b.sc - a.sc);
-          this.setPendingResults([sorted[0].id], [sorted[sorted.length - 1].id], 1, 1);
+          const details = {};
+          this.players.forEach(p => { details[p.id] = `Score <strong>${st.scores[p.id]}</strong><br>Played: ${(st.played[p.id] || []).map(showV).join(', ')}`; });
+          this.setPendingResults([sorted[0].id], [sorted[sorted.length - 1].id], 1, 1, { note: 'Each round: highest card +3, lowest −1. Best total after 5 rounds wins.', details });
         }
       }
 
@@ -1829,7 +1865,7 @@
         document.getElementById('arena-panel').innerHTML = `
           <div class="arena-header"><h2>💰 Greedy Treasure (${st.round}/3)</h2><span class="tag gold">Budget: ${st.budget}</span></div>
           <div style="background:#090e17; padding:14px; border-radius:10px; text-align:center;">
-            <p>Request coins (0 to ${st.budget}). If group exceeds budget, all receive 0!</p>
+            ${st.lastRound ? `<div class="contender-status-bar" style="margin:0 0 10px; text-align:left;">${st.lastRound}</div>` : ''}<p>Request coins (0 to ${st.budget}). If group exceeds budget, all receive 0!</p>
             <div style="display:flex; gap:8px; margin-top:12px;">
               <input type="number" id="greedy-in" min="0" max="${st.budget}" value="${Math.floor(st.budget/3)}" style="width:100px; padding:10px; background:#1e293b; color:#fff; border-radius:8px; border:1px solid #334155; font-size:1.1rem; text-align:center;" />
               <button class="gold" style="flex:1;" onclick="game.bidGreedy(parseInt(document.getElementById('greedy-in').value))">Request Coins</button>
@@ -1855,20 +1891,19 @@
       }
       resolveGreedyRound() {
         const st = this.miniGameState, b = st.budget;
-        let total = 0;
+        const bids = {}; let total = 0;
         this.players.forEach(p => {
           const move = this.onlineMoves[Number(p.id)];
-          let bid = (move && move.bid !== undefined && !move.forfeited) ? move.bid : (move && move.forfeited ? 0 : Math.floor(b / this.players.length));
-          total += bid;
+          const bid = (move && move.bid !== undefined && !move.forfeited) ? move.bid : (move && move.forfeited ? 0 : Math.floor(b / this.players.length));
+          bids[p.id] = bid; total += bid;
         });
-
-        if (total <= b) {
-          this.players.forEach(p => {
-            const move = this.onlineMoves[Number(p.id)];
-            let bid = (move && move.bid !== undefined && !move.forfeited) ? move.bid : (move && move.forfeited ? 0 : Math.floor(b / this.players.length));
-            st.coins[p.id] += bid;
-          });
-        }
+        const ok = total <= b;
+        if (ok) this.players.forEach(p => { st.coins[p.id] += bids[p.id]; });
+        st.reqs = st.reqs || {}; st.roundLog = st.roundLog || [];
+        this.players.forEach(p => { (st.reqs[p.id] = st.reqs[p.id] || []).push(bids[p.id]); });
+        const summary = ok ? `total ${total}/${b} ✓ paid out` : `total ${total}/${b} ✗ over budget, nobody got coins`;
+        st.roundLog.push(`Round ${st.round}: ${summary}`);
+        st.lastRound = `<strong>Round ${st.round}:</strong> ` + this.players.map(p => `${p.name} asked <strong>${bids[p.id]}</strong>`).join(' · ') + `<br>${ok ? '✅' : '💥'} ${summary}`;
         this.onlineMoves = {};
         st.round++;
 
@@ -1878,7 +1913,9 @@
           this.startTurnTimer(45);
         } else {
           const sorted = this.players.map(p => ({ id: p.id, c: st.coins[p.id] })).sort((a,b) => b.c - a.c);
-          this.setPendingResults([sorted[0].id], [sorted[sorted.length - 1].id], 1, 1);
+          const details = {};
+          this.players.forEach(p => { details[p.id] = `🪙 <strong>${st.coins[p.id]}</strong> coins<br>Requests: ${(st.reqs[p.id] || []).join(', ')}`; });
+          this.setPendingResults([sorted[0].id], [sorted[sorted.length - 1].id], 1, 1, { note: st.roundLog.join(' · ') + '<br>Most coins wins, fewest loses.', details });
         }
       }
 
@@ -1961,13 +1998,16 @@
         }
       }
       resolveMemoryHunt() {
+        const details = {};
         const scored = this.players.map(p => {
           const move = this.onlineMoves[Number(p.id)];
-          let score = (move && move.sc !== undefined && !move.forfeited) ? move.sc : (move && move.forfeited ? 0 : 3 + Math.floor(Math.random() * 6));
+          const forf = !!(move && move.forfeited);
+          const score = (move && move.sc !== undefined && !forf) ? move.sc : (forf ? 0 : 3 + Math.floor(Math.random() * 6));
+          details[p.id] = forf ? '⏱️ Timed out (0/10)' : `<strong>${score}/10</strong> cards in the right place`;
           return { id: p.id, sc: score };
         }).sort((a,b) => b.sc - a.sc);
 
-        this.setPendingResults([scored[0].id], [scored[scored.length - 1].id], 1, 1);
+        this.setPendingResults([scored[0].id], [scored[scored.length - 1].id], 1, 1, { note: 'Most cards placed correctly wins, fewest loses.', details });
       }
 
       /* =====================================================================
